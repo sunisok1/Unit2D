@@ -89,9 +89,5 @@ public class CardUI : MonoBehaviour, IPointerClickHandler
         {
             text.color = textColor;
         }
-
-
-
     }
-
 }
