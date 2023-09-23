@@ -19,18 +19,7 @@ public abstract class Card
     public event Action<bool> OnInteractable;
     public event Action OnGoToDiscardPile;
 
-    private bool interactable;
-    public bool Interactable
-    {
-        get => interactable;
-        set
-        {
-            if (interactable == value) return;
-            interactable = value;
-            OnInteractable?.Invoke(value);
-        }
-    }
-
+    public bool interactable;
 
     private bool selected;
 
@@ -39,7 +28,6 @@ public abstract class Card
         get => selected;
         set
         {
-            if (!interactable) return;
             if (selected == value) return;
             selected = value;
             OnSelected?.Invoke(this, value);

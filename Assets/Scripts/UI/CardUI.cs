@@ -1,6 +1,7 @@
 using Newtonsoft.Json.Linq;
 using System.Collections;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -27,22 +28,31 @@ public class CardUI : MonoBehaviour, IPointerClickHandler
     [SerializeField] private Color DisabledColor;
     [SerializeField] private Color TextDisableColor;
 
+    [SerializeField] private bool interactable;
+
     public IEnumerator Start()
     {
-        yield return new WaitWhile(() => card == null);
+        yield return new WaitForEndOfFrame();
 
         CardNameText.text = Lib.Translate[card.Name];
         Image.sprite = Resources.Load<Sprite>(ImagePath + card.Name);
-        card.OnInteractable += Card_OnInteractable;
+        SetColor(card.interactable);
         card.OnSelected += Card_OnSelected;
         card.OnGoToDiscardPile += Card_OnGoToDiscardPile;
     }
 
+    private void Update()
+    {
+        if (interactable != card.interactable)
+        {
+            interactable = card.interactable;
+            SetColor(interactable);
+        }
+    }
 
 
     public void OnDestroy()
     {
-        card.OnInteractable -= Card_OnInteractable;
         card.OnSelected -= Card_OnSelected;
         card.OnGoToDiscardPile -= Card_OnGoToDiscardPile;
     }
@@ -52,16 +62,11 @@ public class CardUI : MonoBehaviour, IPointerClickHandler
     /// <param name="eventData"></param>
     public void OnPointerClick(PointerEventData eventData)
     {
-        //反转selected状态，属性内部会检查是否interactable
-        card.Selected = !card.Selected;
+        if (card.interactable)
+        {
+            card.Selected = !card.Selected;
+        }
     }
-
-    private void Card_OnInteractable(bool value)
-    {
-        //更新颜色
-        SetColor(value);
-    }
-
 
     private void Card_OnSelected(object obj, bool value)
     {

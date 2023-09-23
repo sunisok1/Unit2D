@@ -62,7 +62,7 @@ public static class TurnSystem
 
         //step 2:
         player.Phase = Phase.draw;
-        player.Draw(2);
+        player.Draw(6);
 
         //step 3:
         player.Phase = Phase.use;

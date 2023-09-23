@@ -55,11 +55,11 @@ public class Unit : MonoBehaviour
     #region UserApi
     public void Confirm()
     {
-        State = "Confirmed";
+        State = UnitState.Confirmed;
     }
     public void Cancel()
     {
-        State = "Canceled";
+        State = UnitState.Canceled;
     }
     #endregion
     private void Awake()
@@ -107,6 +107,10 @@ public class Unit : MonoBehaviour
         {
             OnCanConfirm?.Invoke(value);
             canConfirm = value;
+            if (value)
+            {
+                State = UnitState.Waiting;
+            }
         }
     }
     private bool canCancel;
@@ -121,29 +125,7 @@ public class Unit : MonoBehaviour
         }
     }
 
-    private string state;
-    public string State
-    {
-        get => state;
-        set
-        {
-            switch (value)
-            {
-                case "ChooseToUse":
-                    CanConfirm = false;
-                    SelectedCard = null;
-                    while (targets.Count > 0)
-                    {
-                        targets[0].Chosen = false;
-                    }
-                    UnitManager.UpdateUnitInteractable();
-                    break;
-                default:
-                    break;
-            }
-            state = value;
-        }
-    }
+    public UnitState State;
 
 
     #endregion
@@ -196,7 +178,7 @@ public class Unit : MonoBehaviour
         filter ??= DefalutFilter;
         foreach (var card in hand)
         {
-            card.Interactable = filter(card);
+            card.interactable = filter(card);
         }
         bool DefalutFilter(Card card)
         {
@@ -266,7 +248,18 @@ public class Unit : MonoBehaviour
 
     #endregion
 
-    #region Operationsar    /// 选择一张牌使用
+    #region Operations
+    private void CancelSelectingTarget()
+    {
+        foreach (var unit in targets)
+        {
+            unit.Chosen = false;
+        }
+        targets.Clear();
+        UnitManager.UpdateUnitInteractable((unit) => false);
+    }
+
+    /// 选择一张牌使用
     /// </summary>
     /// <returns></returns>
     public IEnumerator ChooseToUse()
@@ -279,17 +272,25 @@ public class Unit : MonoBehaviour
             if (ready != ready_pre)
             {
                 ready_pre = ready;
+                Coroutine coroutine = null;
                 if (ready)
                 {
                     //如果就绪，将除选择牌以外的牌可选择性改成false
                     UpdateCardInteractable((card) => card == SelectedCard);
-                    yield return ChooseUseTarget(SelectedCard.targetFilter, SelectedCard.targetNum);
-                    if (State == "Confirmed")
+                    coroutine = StartCoroutine(ChooseUseTarget(SelectedCard.targetFilter, SelectedCard.targetNum, callback));
+                    void callback()
+                    {
                         Use(SelectedCard);
-                    State = "ChooseToUse";
+                    }
                 }
                 else
                 {
+                    if (coroutine != null)
+                    {
+                        CancelSelectingTarget();
+                        StopCoroutine(coroutine);
+                    }
+
                     UpdateCardInteractable();
                 }
             }
@@ -297,36 +298,32 @@ public class Unit : MonoBehaviour
         }
     }
 
-    public IEnumerator ChooseUseTarget(Func<Unit, bool> filter, int num = 1)
+    public IEnumerator ChooseUseTarget(Func<Unit, bool> filter, int num, Action callback)
     {
-        State = "ChooseUseTarget";
-        bool ready_pre = true;
-        while (State == "ChooseUseTarget")
+        UnitManager.UpdateUnitInteractable(filter);
+        int count_pre = 0;
+        while (true)
         {
-            bool ready = targets.Count == num;
-            if (ready != ready_pre)
-            {
-                ready_pre = ready;
-                if (ready)
-                {
-                    UnitManager.UpdateUnitInteractable((unit) => targets.Contains(unit));
-                }
-                else
-                {
-                    UnitManager.UpdateUnitInteractable(filter);
-                }
-                CanConfirm = ready;
-            }
-
             yield return null;
-        }
-        if (State == "Canceled")
-        {
-            foreach (var unit in targets)
+            if (count_pre != targets.Count)
             {
-                unit.Chosen = false;
+                count_pre = targets.Count;
+                UnitManager.UpdateUnitInteractable((unit) => targets.Contains(unit));
+                CanConfirm = targets.Count == num;
             }
-            targets.Clear();
+            switch (State)
+            {
+                case UnitState.Waiting:
+                    break;
+                case UnitState.Confirmed:
+                    callback();
+                    yield break;
+                case UnitState.Canceled:
+                    CancelSelectingTarget();
+                    yield break;
+                default:
+                    break;
+            }
         }
     }
     #endregion
