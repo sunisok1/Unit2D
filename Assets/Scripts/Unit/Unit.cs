@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEngine.UI.CanvasScaler;
 
 public class Unit : MonoBehaviour
 {
@@ -107,10 +108,7 @@ public class Unit : MonoBehaviour
         {
             OnCanConfirm?.Invoke(value);
             canConfirm = value;
-            if (value)
-            {
-                State = UnitState.Waiting;
-            }
+            State = UnitState.Waiting;
         }
     }
     private bool canCancel;
@@ -169,6 +167,9 @@ public class Unit : MonoBehaviour
     }
 
     #endregion
+
+    #region Method
+
     /// <summary>
     /// 更新手牌可交互性
     /// </summary>
@@ -214,6 +215,7 @@ public class Unit : MonoBehaviour
         }
         return null;
     }
+    #endregion
 
     #region GameLogics
 
@@ -232,6 +234,11 @@ public class Unit : MonoBehaviour
         Debug.Log("使用 " + card.Name);
         OnUseOrRespondCard?.Invoke(card);
         card.Use(targets);
+        if (card.Name == "sha")
+            shaNum--;
+        else if (card.Name == "jiu")
+            jiuNum--;
+        SelectedCard = null;
     }
 
     public void Respond(Card card)
@@ -249,13 +256,12 @@ public class Unit : MonoBehaviour
     #endregion
 
     #region Operations
-    private void CancelSelectingTarget()
+    private void StopSelectingTarget()
     {
-        foreach (var unit in targets)
+        while (targets.Count > 0)
         {
-            unit.Chosen = false;
+            targets[0].Chosen = false;
         }
-        targets.Clear();
         UnitManager.UpdateUnitInteractable((unit) => false);
     }
 
@@ -287,10 +293,10 @@ public class Unit : MonoBehaviour
                 {
                     if (coroutine != null)
                     {
-                        CancelSelectingTarget();
+                        StopSelectingTarget();
                         StopCoroutine(coroutine);
                     }
-
+                    CanConfirm = false;
                     UpdateCardInteractable();
                 }
             }
@@ -300,6 +306,7 @@ public class Unit : MonoBehaviour
 
     public IEnumerator ChooseUseTarget(Func<Unit, bool> filter, int num, Action callback)
     {
+        CanConfirm = false;
         UnitManager.UpdateUnitInteractable(filter);
         int count_pre = 0;
         while (true)
@@ -317,9 +324,13 @@ public class Unit : MonoBehaviour
                     break;
                 case UnitState.Confirmed:
                     callback();
+                    CanConfirm = false;
+                    UpdateCardInteractable();
+                    StopSelectingTarget();
                     yield break;
                 case UnitState.Canceled:
-                    CancelSelectingTarget();
+                    CanConfirm = false;
+                    StopSelectingTarget();
                     yield break;
                 default:
                     break;
