@@ -51,6 +51,8 @@ public class Unit : MonoBehaviour
     public event Action<bool> OnCanCancel;
     //使用时调用
     public event Action<Card> OnUseOrRespondCard;
+    //受伤时调用
+    public event Action<int> OnBeDamaged;
     #endregion
 
     #region UserApi
@@ -252,7 +254,7 @@ public class Unit : MonoBehaviour
     //打出
     public void Respond(Card card)
     {
-        Debug.Log($"{name}打出了{card.Name}");
+        Debug.Log($"{name}打出了{Lib.Translate[card.Name]}");
         hand.Remove(card);
         OnUseOrRespondCard?.Invoke(card);
         card.Respond();
@@ -261,11 +263,11 @@ public class Unit : MonoBehaviour
     //成为目标
     public void BeTargeted(Card card)
     {
-        Debug.Log($"{name}成为{card.Name}的目标");
+        Debug.Log($"{name}成为{Lib.Translate[card.Name]}的目标");
         switch (card)
         {
-            case Sha:
-                StartCoroutine(ChooseToRespond("shan"));
+            case Sha sha:
+                StartCoroutine(ChooseToRespond((card) => card.Name == "shan", () => Damage(sha.damage)));
                 break;
             default:
                 break;
@@ -273,8 +275,9 @@ public class Unit : MonoBehaviour
     }
     public void Damage(int amount = 1)
     {
+        Debug.Log($"{name}受到{amount}点伤害，当前生命值为{hp}");
         hp -= amount;
-        Debug.Log(name + "curhp = " + hp);
+        OnBeDamaged?.Invoke(amount);
     }
 
     #endregion
@@ -381,8 +384,7 @@ public class Unit : MonoBehaviour
         }
     }
 
-    public IEnumerator ChooseToRespond(string name) => ChooseToRespond((card) => card.Name == name);
-    public IEnumerator ChooseToRespond(Func<Card, bool> filter)
+    public IEnumerator ChooseToRespond(Func<Card, bool> filter, Action fail = null)
     {
         yield return new WaitForEndOfFrame();
         Unit pre = CheckCurrentUnit();
@@ -417,6 +419,7 @@ public class Unit : MonoBehaviour
                     yield break;
                 case UnitState.Canceled:
                     CanConfirm = false;
+                    fail?.Invoke();
                     TurnSystem.OperatePlayer = pre;
                     yield break;
                 default:

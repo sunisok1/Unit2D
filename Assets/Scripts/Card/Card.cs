@@ -1,10 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
-using Unity.VisualScripting;
-using UnityEditor.AnimatedValues;
-using UnityEngine;
 
 public abstract class Card
 {
@@ -48,6 +43,7 @@ public abstract class Card
 
 public class Sha : Card
 {
+    public int damage = 1;
     public Sha()
     {
         Name = "sha";
@@ -56,6 +52,7 @@ public class Sha : Card
             return unit != owner;
         };
         targetNum = 1;
+        OnGoToDiscardPile += () => damage = 1;
     }
 
     public override void Use(IEnumerable<Unit> targets)
