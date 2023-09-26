@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public static class TurnSystemUI
 {
-    private static Unit Player => TurnSystem.OperatePlayer;
+    private static Unit Player => TurnSystem.InActionPlayer;
 
     private static readonly Button EndTurnButton;
     private static readonly Button ConfirmButton;

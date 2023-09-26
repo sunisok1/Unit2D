@@ -81,6 +81,15 @@ public class Unit : MonoBehaviour
         StopSelectingTarget();
     }
 
+    public void EndTurn()
+    {
+        SelectedCard = null;
+        StopSelectingTarget();
+        foreach (Card card in hand)
+        {
+            card.interactable = false;
+        }
+    }
     #region Attribute
 
     private bool interactable;
@@ -165,11 +174,11 @@ public class Unit : MonoBehaviour
     {
         if (value)
         {
-            TurnSystem.OperatePlayer.targets.Add(this);
+            TurnSystem.InActionPlayer.targets.Add(this);
         }
         else
         {
-            TurnSystem.OperatePlayer.targets.Remove(this);
+            TurnSystem.InActionPlayer.targets.Remove(this);
         }
     }
 
@@ -273,6 +282,7 @@ public class Unit : MonoBehaviour
                 break;
         }
     }
+    //受到伤害
     public void Damage(int amount = 1)
     {
         Debug.Log($"{name}受到{amount}点伤害，当前生命值为{hp}");
@@ -285,10 +295,10 @@ public class Unit : MonoBehaviour
     #region Operations
     private Unit CheckCurrentUnit()
     {
-        if (TurnSystem.OperatePlayer != this && isEnemy == false)
+        if (TurnSystem.InActionPlayer != this && isEnemy == false)
         {
-            Unit pre = TurnSystem.OperatePlayer;
-            TurnSystem.OperatePlayer = this;
+            Unit pre = TurnSystem.InActionPlayer;
+            TurnSystem.InActionPlayer = this;
             return pre;
         }
         return null;
@@ -415,18 +425,19 @@ public class Unit : MonoBehaviour
                     Respond(SelectedCard);
                     CanConfirm = false;
                     UpdateCardInteractable();
-                    TurnSystem.OperatePlayer = pre;
+                    TurnSystem.InActionPlayer = pre;
                     yield break;
                 case UnitState.Canceled:
                     CanConfirm = false;
                     fail?.Invoke();
-                    TurnSystem.OperatePlayer = pre;
+                    TurnSystem.InActionPlayer = pre;
                     yield break;
                 default:
                     break;
             }
         }
     }
+
     #endregion
 }
 

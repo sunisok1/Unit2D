@@ -14,7 +14,7 @@ public class GameManager : MonoBehaviour
         UnitManager.SpawnUnit(1, 4, "03", false);
         UnitManager.SpawnUnit(1, 5, "04", false);
 
-        u.Draw(6);
+        u.Draw(5);
 
         TurnSystem.StartGame();
     }

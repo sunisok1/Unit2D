@@ -13,33 +13,33 @@ public static class TurnSystem
     /// </summary>
     public static event Action<Unit> OnCurrentUnitLeave;
 
-    private static Unit operatePlayer;
-    private static Unit player;
+    private static Unit inActionPlayer;
+    private static Unit inTurnPlayer;
 
     public static int TurnNumber { get; private set; } = 1;
 
-    public static Unit OperatePlayer
+    public static Unit InActionPlayer
     {
-        get => operatePlayer;
+        get => inActionPlayer;
         set
         {
-            if (operatePlayer == value) return;
-            if (operatePlayer != null)
+            if (inActionPlayer == value) return;
+            if (inActionPlayer != null)
             {
-                OnCurrentUnitLeave(operatePlayer);
-                operatePlayer.Leave();
+                OnCurrentUnitLeave(inActionPlayer);
+                inActionPlayer.Leave();
             }
-            operatePlayer = value;
-            OnCurrentUnitEnter(operatePlayer);
+            inActionPlayer = value;
+            OnCurrentUnitEnter(inActionPlayer);
         }
     }
     public static Unit InTurnPlayer
     {
-        get => player;
+        get => inTurnPlayer;
         private set
         {
-            player = value;
-            OperatePlayer = value;
+            inTurnPlayer = value;
+            InActionPlayer = value;
         }
     }
 
@@ -59,34 +59,41 @@ public static class TurnSystem
         //step 0:
 
         //step 1:
-        player.Phase = Phase.begin;
+        inTurnPlayer.Phase = Phase.begin;
 
         //step 2:
-        player.Phase = Phase.draw;
-        player.Draw(6);
+        inTurnPlayer.Phase = Phase.draw;
+        inTurnPlayer.Draw(6);
 
         //step 3:
-        player.Phase = Phase.use;
-        while (player.Phase == Phase.use)
+        inTurnPlayer.Phase = Phase.use;
+        Coroutine coroutine = null;
+        while (true)
         {
-            yield return player.ChooseToUse();
+            yield return null;
+            coroutine ??= inTurnPlayer.StartCoroutine(inTurnPlayer.ChooseToUse());
+            if (inTurnPlayer.Phase == Phase.end)
+            {
+                inTurnPlayer.StopCoroutine(coroutine);
+                inTurnPlayer.EndTurn();
+                break;
+            }
         }
-
         //step 4:
-        player.Phase = Phase.end;
+        inTurnPlayer.Phase = Phase.end;
         yield return null;
         NextTurn();
     }
 
     public static void EndUse()
     {
-        if (operatePlayer.Phase == Phase.use)
-            operatePlayer.Phase = Phase.end;
+        if (inActionPlayer.Phase == Phase.use)
+            inActionPlayer.Phase = Phase.end;
     }
 
     public static void NextTurn()
     {
         TurnNumber++;
-        StartTurn(operatePlayer.next);
+        StartTurn(inActionPlayer.next);
     }
 }

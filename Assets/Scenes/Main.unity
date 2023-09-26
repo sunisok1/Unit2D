@@ -406,6 +406,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 5316666449253360539}
     m_Modifications:
+    - target: {fileID: 915128546136204599, guid: 95af8e66610faa14682e74f00a383bdc, type: 3}
+      propertyPath: m_text
+      value: "\u7ED3\u675F"
+      objectReference: {fileID: 0}
     - target: {fileID: 7129997852522423084, guid: 95af8e66610faa14682e74f00a383bdc, type: 3}
       propertyPath: m_Name
       value: EndTurnButton
@@ -1233,7 +1237,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5.000001
+  orthographic size: 4.999999
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1337,7 +1341,7 @@ MonoBehaviour:
   m_Follow: {fileID: 32353781}
   m_Lens:
     FieldOfView: 60
-    OrthographicSize: 5.000001
+    OrthographicSize: 4.999999
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0
