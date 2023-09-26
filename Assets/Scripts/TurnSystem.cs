@@ -27,6 +27,7 @@ public static class TurnSystem
             if (operatePlayer != null)
             {
                 OnCurrentUnitLeave(operatePlayer);
+                operatePlayer.Leave();
             }
             operatePlayer = value;
             OnCurrentUnitEnter(operatePlayer);

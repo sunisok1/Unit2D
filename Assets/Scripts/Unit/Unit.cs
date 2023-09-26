@@ -13,7 +13,7 @@ public class Unit : MonoBehaviour
 
     private int hp = 4;
 
-    private int shaNum = 1;
+    private int shaNum = 2;
 
     private int jiuNum = 1;
 
@@ -72,6 +72,11 @@ public class Unit : MonoBehaviour
         OnRemoveCard += Unit_OnRemoveCard;
 
         OnChosen += Unit_OnChosen;
+    }
+
+    public void Leave()
+    {
+        StopSelectingTarget();
     }
 
     #region Attribute
@@ -218,7 +223,7 @@ public class Unit : MonoBehaviour
     #endregion
 
     #region GameLogics
-
+    //摸牌
     public void Draw(int amount = 1)
     {
         for (int i = 0; i < amount; i++)
@@ -228,10 +233,14 @@ public class Unit : MonoBehaviour
             OnAddCard(card);
         }
     }
-
+    //使用
     public void Use(Card card)
     {
-        Debug.Log("使用 " + card.Name);
+        foreach (Unit unit in targets)
+        {
+            Debug.Log($"{name}对{unit}使用了{card.Name}");
+        }
+        hand.Remove(card);
         OnUseOrRespondCard?.Invoke(card);
         card.Use(targets);
         if (card.Name == "sha")
@@ -240,13 +249,28 @@ public class Unit : MonoBehaviour
             jiuNum--;
         SelectedCard = null;
     }
-
+    //打出
     public void Respond(Card card)
     {
-        Debug.Log("打出 " + card.Name);
+        Debug.Log($"{name}打出了{card.Name}");
+        hand.Remove(card);
         OnUseOrRespondCard?.Invoke(card);
+        card.Respond();
+        SelectedCard = null;
     }
-
+    //成为目标
+    public void BeTargeted(Card card)
+    {
+        Debug.Log($"{name}成为{card.Name}的目标");
+        switch (card)
+        {
+            case Sha:
+                StartCoroutine(ChooseToRespond("shan"));
+                break;
+            default:
+                break;
+        }
+    }
     public void Damage(int amount = 1)
     {
         hp -= amount;
@@ -256,23 +280,41 @@ public class Unit : MonoBehaviour
     #endregion
 
     #region Operations
+    private Unit CheckCurrentUnit()
+    {
+        if (TurnSystem.OperatePlayer != this && isEnemy == false)
+        {
+            Unit pre = TurnSystem.OperatePlayer;
+            TurnSystem.OperatePlayer = this;
+            return pre;
+        }
+        return null;
+    }
+
     private void StopSelectingTarget()
     {
-        while (targets.Count > 0)
+        try
         {
-            targets[0].Chosen = false;
+            while (targets.Count > 0)
+            {
+                targets[0].Chosen = false;
+            }
+        }
+        catch (Exception e)
+        {
+            throw e;
         }
         UnitManager.UpdateUnitInteractable((unit) => false);
     }
 
-    /// 选择一张牌使用
-    /// </summary>
-    /// <returns></returns>
     public IEnumerator ChooseToUse()
     {
+        yield return new WaitForEndOfFrame();
+        CheckCurrentUnit();
         bool ready_pre = true;
         while (true)
         {
+            yield return null;
             bool ready = SelectedCard != null;
             //与上一帧相比发生变化时再进行，避免每一帧都进行无意义的调用
             if (ready != ready_pre)
@@ -300,12 +342,13 @@ public class Unit : MonoBehaviour
                     UpdateCardInteractable();
                 }
             }
-            yield return null;
         }
     }
 
     public IEnumerator ChooseUseTarget(Func<Unit, bool> filter, int num, Action callback)
     {
+        yield return new WaitForEndOfFrame();
+        CheckCurrentUnit();
         CanConfirm = false;
         UnitManager.UpdateUnitInteractable(filter);
         int count_pre = 0;
@@ -331,6 +374,50 @@ public class Unit : MonoBehaviour
                 case UnitState.Canceled:
                     CanConfirm = false;
                     StopSelectingTarget();
+                    yield break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    public IEnumerator ChooseToRespond(string name) => ChooseToRespond((card) => card.Name == name);
+    public IEnumerator ChooseToRespond(Func<Card, bool> filter)
+    {
+        yield return new WaitForEndOfFrame();
+        Unit pre = CheckCurrentUnit();
+        bool ready_pre = true;
+        while (true)
+        {
+            yield return null;
+            bool ready = SelectedCard != null && filter(SelectedCard);
+            if (ready != ready_pre)
+            {
+                ready_pre = ready;
+                if (ready)
+                {
+                    UpdateCardInteractable((card) => card == SelectedCard);
+                    CanConfirm = true;
+                }
+                else
+                {
+                    CanConfirm = false;
+                    UpdateCardInteractable(filter);
+                }
+            }
+            switch (State)
+            {
+                case UnitState.Waiting:
+                    break;
+                case UnitState.Confirmed:
+                    Respond(SelectedCard);
+                    CanConfirm = false;
+                    UpdateCardInteractable();
+                    TurnSystem.OperatePlayer = pre;
+                    yield break;
+                case UnitState.Canceled:
+                    CanConfirm = false;
+                    TurnSystem.OperatePlayer = pre;
                     yield break;
                 default:
                     break;

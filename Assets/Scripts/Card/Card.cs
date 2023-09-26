@@ -16,7 +16,6 @@ public abstract class Card
 
 
     public event EventHandler<bool> OnSelected;
-    public event Action<bool> OnInteractable;
     public event Action OnGoToDiscardPile;
 
     public bool interactable;
@@ -39,6 +38,10 @@ public abstract class Card
         OnGoToDiscardPile?.Invoke();
     }
 
+    public virtual void Respond()
+    {
+        OnGoToDiscardPile?.Invoke();
+    }
 
     public Func<Unit, bool> targetFilter;
 }
@@ -58,9 +61,9 @@ public class Sha : Card
     public override void Use(IEnumerable<Unit> targets)
     {
         base.Use(targets);
-        foreach (var item in targets)
+        foreach (var unit in targets)
         {
-            Debug.Log(item.name);
+            unit.BeTargeted(this);
         }
     }
 }

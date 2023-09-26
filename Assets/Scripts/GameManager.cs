@@ -1,6 +1,4 @@
-using System.IO;
 using UnityEngine;
-using Newtonsoft.Json;
 
 public class GameManager : MonoBehaviour
 {
@@ -11,9 +9,12 @@ public class GameManager : MonoBehaviour
         TurnSystemUI.Init();
         CardUICreater.Init();
 
-        UnitManager.SpawnUnit(0, 0, "01");
-        UnitManager.SpawnUnit(1, 1, "02");
-        UnitManager.SpawnUnit(1, 4, "03");
+        UnitManager.SpawnUnit(0, 0, "01", false);
+        var u = UnitManager.SpawnUnit(1, 1, "02", false);
+        UnitManager.SpawnUnit(1, 4, "03", false);
+        UnitManager.SpawnUnit(1, 5, "04", false);
+
+        u.Draw(6);
 
         TurnSystem.StartGame();
     }

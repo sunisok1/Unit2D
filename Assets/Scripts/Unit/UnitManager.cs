@@ -28,7 +28,7 @@ public static class UnitManager
         }
     }
 
-    public static GameObject SpawnUnit(int x, int y, string name, bool isEnemy = false)
+    public static Unit SpawnUnit(int x, int y, string name, bool isEnemy)
     {
         Vector3 position = GridSystem.GetWorldPosition(x, y);
         GameObject prefab = isEnemy ? UnitEnemyPrefab : UnitPrefab;
@@ -37,7 +37,7 @@ public static class UnitManager
         Unit unit = gameObject.GetComponent<Unit>();
         OnAnyUnitSpawned(unit);
         unit.Chosen = false;
-        return gameObject;
+        return unit;
     }
 
     public static void ReSetChosen()
