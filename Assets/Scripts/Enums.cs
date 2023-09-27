@@ -1,4 +1,4 @@
 public enum UnitState
 {
-    Waiting, Confirmed, Canceled
+    Waiting, Confirmed, Canceled, EndUse
 }

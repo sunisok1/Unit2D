@@ -62,7 +62,9 @@ public static class TurnSystemUI
         UpdateEndTurnButtonVisibility(unit);
         //在当前角色能确定或取消时更新Button可交互性
         unit.OnCanConfirm += Unit_OnCanConfirm;
+        Unit_OnCanConfirm(unit.CanConfirm);
         unit.OnCanCancel += Unit_OnCanCancel;
+        Unit_OnCanCancel(unit.CanCancel);
     }
     private static void TurnSystem_OnCurrentUnitLeave(Unit unit)
     {

@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-using static UnityEngine.UI.CanvasScaler;
 
 public class Unit : MonoBehaviour
 {
@@ -64,6 +62,17 @@ public class Unit : MonoBehaviour
     {
         State = UnitState.Canceled;
     }
+
+    public void EndUse()
+    {
+        State = UnitState.EndUse;
+        SelectedCard = null;
+        StopSelectingTarget();
+        foreach (Card card in hand)
+        {
+            card.interactable = false;
+        }
+    }
     #endregion
     private void Awake()
     {
@@ -81,15 +90,7 @@ public class Unit : MonoBehaviour
         StopSelectingTarget();
     }
 
-    public void EndTurn()
-    {
-        SelectedCard = null;
-        StopSelectingTarget();
-        foreach (Card card in hand)
-        {
-            card.interactable = false;
-        }
-    }
+
     #region Attribute
 
     private bool interactable;
@@ -234,6 +235,41 @@ public class Unit : MonoBehaviour
     #endregion
 
     #region GameLogics
+    public void StartTurn()
+    {
+        StartCoroutine(startTurn());
+        IEnumerator startTurn()
+        {
+            TurnSystem.SetInTurnPlayer(this);
+            //step 0:
+
+            //step 1:
+            Phase = Phase.begin;
+
+            //step 2:
+            Phase = Phase.draw;
+            Draw(6);
+
+            //step 3:
+            Phase = Phase.use;
+            Coroutine coroutine = null;
+            while (true)
+            {
+                yield return null;
+                coroutine ??= StartCoroutine(ChooseToUse());
+                if (State == UnitState.EndUse)
+                {
+                    StopCoroutine(coroutine);
+                    break;
+                }
+            }
+            //step 4:
+            Phase = Phase.end;
+
+            yield return null;
+            TurnSystem.NextTurn();
+        }
+    }
     //摸牌
     public void Draw(int amount = 1)
     {
@@ -413,6 +449,7 @@ public class Unit : MonoBehaviour
     {
         yield return new WaitForEndOfFrame();
         Unit pre = CheckCurrentUnit();
+        CanCancel = true;
         bool ready_pre = true;
         while (true)
         {

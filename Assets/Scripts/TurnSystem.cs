@@ -43,6 +43,11 @@ public static class TurnSystem
         }
     }
 
+    public static void SetInTurnPlayer(Unit inTurnPlayer)
+    {
+        InTurnPlayer = inTurnPlayer;
+    }
+
 
     public static void StartGame()
     {
@@ -50,39 +55,7 @@ public static class TurnSystem
         {
             Debug.LogWarning("UnitList is Empty.Can not start game");
         }
-        UnitManager.First.StartCoroutine(StartTurn(UnitManager.First));
-    }
-
-    private static IEnumerator StartTurn(Unit unit)
-    {
-        InTurnPlayer = unit;
-        //step 0:
-
-        //step 1:
-        inTurnPlayer.Phase = Phase.begin;
-
-        //step 2:
-        inTurnPlayer.Phase = Phase.draw;
-        inTurnPlayer.Draw(6);
-
-        //step 3:
-        inTurnPlayer.Phase = Phase.use;
-        Coroutine coroutine = null;
-        while (true)
-        {
-            yield return null;
-            coroutine ??= inTurnPlayer.StartCoroutine(inTurnPlayer.ChooseToUse());
-            if (inTurnPlayer.Phase == Phase.end)
-            {
-                inTurnPlayer.StopCoroutine(coroutine);
-                inTurnPlayer.EndTurn();
-                break;
-            }
-        }
-        //step 4:
-        inTurnPlayer.Phase = Phase.end;
-        yield return null;
-        NextTurn();
+        UnitManager.First.StartTurn();
     }
 
     public static void EndUse()
@@ -94,6 +67,6 @@ public static class TurnSystem
     public static void NextTurn()
     {
         TurnNumber++;
-        StartTurn(inActionPlayer.next);
+        inActionPlayer.next.StartTurn();
     }
 }
