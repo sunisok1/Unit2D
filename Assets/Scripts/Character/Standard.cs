@@ -18,11 +18,9 @@ public static class Standard
                 Debug.Log("发动奸雄");
             },
         };
-        Add("caocao", Sex.male, Country.wei, 4, jianxiong);
-
+        characters.Add(new("caocao", 15, Sex.male, Country.wei, 4, jianxiong));
 
     }
-    private static void Add(string name, Sex sex, Country country, int maxHp, params Skill[] skills) => characters.Add(new(name, sex, country, maxHp, skills));
     public static Character GetCharacter(string name)
     {
         foreach (Character character in characters)

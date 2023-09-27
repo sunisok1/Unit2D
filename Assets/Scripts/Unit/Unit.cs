@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 public class Unit : MonoBehaviour
 {
@@ -532,6 +533,10 @@ public class Unit : MonoBehaviour
         }
     }
 
+    public IEnumerator ChooseWhetherToActivateSkill()
+    {
+        yield break;
+    }
     #endregion
 }
 

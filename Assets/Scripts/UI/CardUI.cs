@@ -16,7 +16,7 @@ public class CardUI : MonoBehaviour, IPointerClickHandler
     [SerializeField] private TextMeshProUGUI CardNameText;
     [SerializeField] private Image Image;
 
-    public static string ImagePath = "Image/";
+    public static string ImagePath = "Image/card/";
 
     [SerializeField] private Image[] TargetImages;
     [SerializeField] private TextMeshProUGUI[] TargetTexts;
