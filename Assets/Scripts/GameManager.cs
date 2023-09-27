@@ -17,8 +17,6 @@ public class GameManager : MonoBehaviour
         Unit unit3 = UnitManager.SpawnUnit(1, 4, "03", false);
         Unit unit4 = UnitManager.SpawnUnit(1, 5, "04", false);
 
-        StartCoroutine(Crawler.DownloadSkin(Standard.characters));
-
         TurnSystem.StartGame();
     }
 
