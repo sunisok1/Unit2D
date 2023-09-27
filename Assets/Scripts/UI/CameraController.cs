@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace CAMERA
 {
-
     public class CameraController : MonoBehaviour
     {
         [SerializeField] private float speed;

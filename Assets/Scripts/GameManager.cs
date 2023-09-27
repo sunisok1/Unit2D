@@ -9,12 +9,12 @@ public class GameManager : MonoBehaviour
         TurnSystemUI.Init();
         CardUICreater.Init();
 
-        UnitManager.SpawnUnit(0, 0, "01", false);
-        var u = UnitManager.SpawnUnit(1, 1, "02", false);
-        UnitManager.SpawnUnit(1, 4, "03", false);
-        UnitManager.SpawnUnit(1, 5, "04", false);
+        Unit unit1 = UnitManager.SpawnUnit(0, 0, "01", false);
+        unit1.SetCharactor(Standard.GetCharacter("caocao"));
+        Unit unit2 = UnitManager.SpawnUnit(1, 1, "02", false);
+        Unit unit3 = UnitManager.SpawnUnit(1, 4, "03", false);
+        Unit unit4 = UnitManager.SpawnUnit(1, 5, "04", false);
 
-        u.Draw(5);
 
         TurnSystem.StartGame();
     }

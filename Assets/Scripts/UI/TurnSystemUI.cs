@@ -1,6 +1,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -41,11 +42,7 @@ public static class TurnSystemUI
 
     public static void Init()
     {
-        EndTurnButton.onClick.AddListener(() =>
-        {
-            TurnSystem.EndUse();
-        });
-
+        EndTurnButton.onClick.AddListener(() => Player.EndUse());
         ConfirmButton.onClick.AddListener(() => Player.Confirm());
         CancelButton.onClick.AddListener(() => Player.Cancel());
 
@@ -65,6 +62,7 @@ public static class TurnSystemUI
         Unit_OnCanConfirm(unit.CanConfirm);
         unit.OnCanCancel += Unit_OnCanCancel;
         Unit_OnCanCancel(unit.CanCancel);
+        EndTurnButton.gameObject.SetActive(unit.isEnemy == false && unit == TurnSystem.InTurnPlayer);
     }
     private static void TurnSystem_OnCurrentUnitLeave(Unit unit)
     {

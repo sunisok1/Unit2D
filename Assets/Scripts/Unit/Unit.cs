@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Unit : MonoBehaviour
@@ -8,6 +9,8 @@ public class Unit : MonoBehaviour
     #region Fileds
 
     public bool isEnemy;
+
+    private int maxHp = 4;
 
     private int hp = 4;
 
@@ -23,9 +26,10 @@ public class Unit : MonoBehaviour
     /// </summary>
     private readonly List<Card> hand = new();
 
-    [NonSerialized]
+    private Character character;
+
     //下家
-    public Unit next;
+    [NonSerialized] public Unit next;
     //选择的牌
     private Card SelectedCard;
     //选择的单位
@@ -51,6 +55,9 @@ public class Unit : MonoBehaviour
     public event Action<Card> OnUseOrRespondCard;
     //受伤时调用
     public event Action<int> OnBeDamaged;
+    #region SkillEvents
+    private event Action OnDamageEnd;
+    #endregion
     #endregion
 
     #region UserApi
@@ -235,6 +242,7 @@ public class Unit : MonoBehaviour
     #endregion
 
     #region GameLogics
+    //开启回合
     public void StartTurn()
     {
         StartCoroutine(startTurn());
@@ -259,6 +267,7 @@ public class Unit : MonoBehaviour
                 coroutine ??= StartCoroutine(ChooseToUse());
                 if (State == UnitState.EndUse)
                 {
+                    State = UnitState.Waiting;
                     StopCoroutine(coroutine);
                     break;
                 }
@@ -324,8 +333,30 @@ public class Unit : MonoBehaviour
         Debug.Log($"{name}受到{amount}点伤害，当前生命值为{hp}");
         hp -= amount;
         OnBeDamaged?.Invoke(amount);
+        OnDamageEnd?.Invoke();
     }
-
+    //设置武将
+    public void SetCharactor(Character character)
+    {
+        this.character = character;
+        hp = maxHp = character.maxHp;
+        foreach (Skill skill in character.skills)
+        {
+            AddSkill(skill);
+        }
+    }
+    //添加技能
+    public void AddSkill(Skill skill)
+    {
+        switch (skill.trigger)
+        {
+            case Trigger.damageEnd:
+                OnDamageEnd += skill.content;
+                break;
+            default:
+                throw new NotImplementedException("没有对应技能触发事件");
+        }
+    }
     #endregion
 
     #region Operations
@@ -422,8 +453,16 @@ public class Unit : MonoBehaviour
             if (count_pre != targets.Count)
             {
                 count_pre = targets.Count;
-                UnitManager.UpdateUnitInteractable((unit) => targets.Contains(unit));
-                CanConfirm = targets.Count == num;
+                bool ready = targets.Count == num;
+                if (ready)
+                {
+                    UnitManager.UpdateUnitInteractable((unit) => targets.Contains(unit));
+                }
+                else
+                {
+                    UnitManager.UpdateUnitInteractable(filter);
+                }
+                CanConfirm = ready;
             }
             switch (State)
             {

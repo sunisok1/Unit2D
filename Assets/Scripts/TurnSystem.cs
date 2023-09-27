@@ -57,13 +57,6 @@ public static class TurnSystem
         }
         UnitManager.First.StartTurn();
     }
-
-    public static void EndUse()
-    {
-        if (inActionPlayer.Phase == Phase.use)
-            inActionPlayer.Phase = Phase.end;
-    }
-
     public static void NextTurn()
     {
         TurnNumber++;
