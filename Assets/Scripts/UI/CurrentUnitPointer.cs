@@ -1,16 +1,20 @@
 using UnityEngine;
 
-public class CurrentUnitPointer : MonoBehaviour
+namespace UI
 {
-    [SerializeField] private float offset;
-    private void Awake()
-    {
-        TurnSystem.OnCurrentUnitEnter += TurnSystem_OnCurrentUnitEnter;
-    }
 
-    private void TurnSystem_OnCurrentUnitEnter(object obj)
+    public class CurrentUnitPointer : MonoBehaviour
     {
-        Unit unit = obj as Unit;
-        transform.position = unit.transform.position + offset * Vector3.up;
+        [SerializeField] private float offset;
+        private void Awake()
+        {
+            TurnSystem.OnCurrentUnitEnter += TurnSystem_OnCurrentUnitEnter;
+        }
+
+        private void TurnSystem_OnCurrentUnitEnter(object obj)
+        {
+            Unit unit = obj as Unit;
+            transform.position = unit.transform.position + offset * Vector3.up;
+        }
     }
 }
