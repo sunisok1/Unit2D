@@ -324,16 +324,17 @@ public class Unit : MonoBehaviour
     {
         yield return new WaitForEndOfFrame();
         CheckCurrentUnit();
+        CanCancel = false;
         bool ready_pre = true;
         while (true)
         {
             yield return null;
             bool ready = SelectedCard != null;
+            Coroutine coroutine = null;
             //与上一帧相比发生变化时再进行，避免每一帧都进行无意义的调用
             if (ready != ready_pre)
             {
                 ready_pre = ready;
-                Coroutine coroutine = null;
                 if (ready)
                 {
                     //如果就绪，将除选择牌以外的牌可选择性改成false
@@ -343,6 +344,7 @@ public class Unit : MonoBehaviour
                     {
                         Use(SelectedCard);
                     }
+                    CanCancel = true;
                 }
                 else
                 {
@@ -351,9 +353,22 @@ public class Unit : MonoBehaviour
                         StopSelectingTarget();
                         StopCoroutine(coroutine);
                     }
-                    CanConfirm = false;
                     UpdateCardInteractable();
+                    CanConfirm = false;
+                    CanCancel = false;
                 }
+            }
+            if (State == UnitState.Canceled)
+            {
+                if (coroutine != null)
+                {
+                    StopSelectingTarget();
+                    StopCoroutine(coroutine);
+                }
+                SelectedCard.Selected = false;
+                SelectedCard = null;
+                CanCancel = false;
+                UpdateCardInteractable();
             }
         }
     }
