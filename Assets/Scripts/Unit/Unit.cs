@@ -10,6 +10,8 @@ public class Unit : MonoBehaviour
 
     public bool isEnemy;
 
+    public Sex sex;
+
     private int maxHp = 4;
 
     private int hp = 4;
@@ -52,7 +54,7 @@ public class Unit : MonoBehaviour
     //可取消时调用
     public event Action<bool> OnCanCancel;
     //使用时调用
-    public event Action<Card> OnUseOrRespondCard;
+    public event EventHandler<Card> OnUseOrRespondCard;
     //受伤时调用
     public event Action<int> OnBeDamaged;
     #region SkillEvents
@@ -297,7 +299,7 @@ public class Unit : MonoBehaviour
             Debug.Log($"{name}对{unit}使用了{card.Name}");
         }
         hand.Remove(card);
-        OnUseOrRespondCard?.Invoke(card);
+        OnUseOrRespondCard?.Invoke(this, card);
         card.Use(targets);
         if (card.Name == "sha")
             shaNum--;
@@ -310,7 +312,7 @@ public class Unit : MonoBehaviour
     {
         Debug.Log($"{name}打出了{Lib.Translate[card.Name]}");
         hand.Remove(card);
-        OnUseOrRespondCard?.Invoke(card);
+        OnUseOrRespondCard?.Invoke(this, card);
         card.Respond();
         SelectedCard = null;
     }
@@ -339,6 +341,7 @@ public class Unit : MonoBehaviour
     public void SetCharactor(Character character)
     {
         this.character = character;
+        sex = character.sex;
         hp = maxHp = character.maxHp;
         foreach (Skill skill in character.skills)
         {

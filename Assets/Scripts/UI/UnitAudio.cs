@@ -7,9 +7,10 @@ public class UnitAudio : MonoBehaviour
 {
     Unit unit;
     AudioSource audioSource;
-    private const string AudioClipPath = "Audio/card/male/";
 
-    Dictionary<string, AudioClip> EffectAudioClipDic = new();
+    readonly Dictionary<string, AudioClip> CardAudioClipDic_male = new();
+    readonly Dictionary<string, AudioClip> CardAudioClipDic_famale = new();
+    readonly Dictionary<string, AudioClip> EffectAudioClipDic = new();
 
     private void Start()
     {
@@ -42,9 +43,18 @@ public class UnitAudio : MonoBehaviour
         audioSource.PlayOneShot(clip);
     }
 
-    private void Unit_OnUseOrRespondCard(Card card)
+    private void Unit_OnUseOrRespondCard(object unit, Card card)
     {
-        AudioClip clip = Resources.Load<AudioClip>(AudioClipPath + card.Name);
+        Dictionary<string, AudioClip> dic = (unit as Unit).sex switch
+        {
+            Sex.male => CardAudioClipDic_male,
+            Sex.female => CardAudioClipDic_famale,
+            _ => throw new System.NotImplementedException()
+        };
+        if (!dic.TryGetValue(card.Name, out AudioClip clip))
+        {
+            clip = Resources.Load<AudioClip>($"Audio/card/{(unit as Unit).sex}/" + card.Name);
+        }
         audioSource.PlayOneShot(clip);
     }
 }
