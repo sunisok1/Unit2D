@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 public class Unit : MonoBehaviour
@@ -42,6 +43,7 @@ public class Unit : MonoBehaviour
 
     public Dictionary<string, object> storage = new();
 
+    private Sprite skin;
     #endregion
 
     #region Events
@@ -57,6 +59,10 @@ public class Unit : MonoBehaviour
     public event EventHandler<Card> OnUseOrRespondCard;
     //受伤时调用
     public event Action<int> OnBeDamaged;
+    //添加技能时调用
+    public event Action<Skill> OnAddSkill;
+    //设置皮肤时调用
+    public event Action<Sprite> OnSetSkin;
     #region SkillEvents
     private event Action<UnitEventArgs> OnPhaseUseBegin;
     private event Action<UnitEventArgs> OnDamageEnd;
@@ -149,6 +155,16 @@ public class Unit : MonoBehaviour
         {
             OnCanCancel?.Invoke(value);
             canCancel = value;
+        }
+    }
+
+    public Sprite Skin
+    {
+        get => skin;
+        set
+        {
+            OnSetSkin?.Invoke(value);
+            skin = value;
         }
     }
 
@@ -282,7 +298,7 @@ public class Unit : MonoBehaviour
     {
         foreach (Unit unit in targets)
         {
-            Debug.Log($"{name}对{unit}使用了{card.name}");
+            Debug.Log($"{Lib.Translate(name)}对{Lib.Translate(unit.name)}使用了{card.name}");
         }
         hand.Remove(card);
         OnUseOrRespondCard?.Invoke(this, card);
@@ -296,7 +312,7 @@ public class Unit : MonoBehaviour
     //打出
     public void Respond(Card card)
     {
-        Debug.Log($"{name}打出了{card.chName}");
+        Debug.Log($"{Lib.Translate(name)}打出了{Lib.Translate(card.name)}");
         hand.Remove(card);
         OnUseOrRespondCard?.Invoke(this, card);
         card.Respond();
@@ -305,7 +321,7 @@ public class Unit : MonoBehaviour
     //成为目标
     public void BeTargeted(Card card)
     {
-        Debug.Log($"{name}成为{card.chName}的目标");
+        Debug.Log($"{Lib.Translate(name)}成为{Lib.Translate(card.name)}的目标");
         switch (card)
         {
             case Sha sha:
@@ -318,7 +334,7 @@ public class Unit : MonoBehaviour
     //受到伤害
     public void Damage(int amount = 1)
     {
-        Debug.Log($"{name}受到{amount}点伤害，当前生命值为{hp}");
+        Debug.Log($"{Lib.Translate(name)}受到{amount}点伤害，当前生命值为{hp}");
         hp -= amount;
         OnBeDamaged?.Invoke(amount);
         OnDamageEnd?.Invoke(evnetArgs);
@@ -327,16 +343,20 @@ public class Unit : MonoBehaviour
     public void SetCharactor(Character character)
     {
         this.character = character;
+        name = character.name;
         sex = character.sex;
         hp = maxHp = character.maxHp;
         foreach (Skill skill in character.skills)
         {
             AddSkill(skill);
         }
+        Skin = Resources.Load<Sprite>($"Image/skin/{name}/00");
+
     }
     //添加技能
     public void AddSkill(Skill skill)
     {
+        OnAddSkill?.Invoke(skill);
         if (skill.CompanionSkills != null)
         {
             foreach (Skill companionSkill in skill.CompanionSkills)
@@ -371,7 +391,7 @@ public class Unit : MonoBehaviour
             default:
                 throw new NotImplementedException("技能类型异常");
         }
-        Debug.Log($"{name}添加了技能{skill.name}");
+        Debug.Log($"{Lib.Translate(name)}添加了技能{skill.name}");
     }
     //交给目标角色手牌
     public void Give(IEnumerable<Card> cards, Unit target)
@@ -479,7 +499,6 @@ public class Unit : MonoBehaviour
         int count_pre = 0;
         while (true)
         {
-            Debug.Log("te");
             yield return null;
             if (count_pre != targets.Count)
             {

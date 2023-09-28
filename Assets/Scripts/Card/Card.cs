@@ -7,8 +7,6 @@ public abstract class Card
 
     public string name;
 
-    public string chName;
-
     public int targetNum;
 
 
@@ -49,7 +47,6 @@ public class Sha : Card
     public Sha()
     {
         name = "sha";
-        chName = "杀";
         targetFilter = (unit) =>
         {
             return unit != owner;
@@ -72,6 +69,5 @@ public class Shan : Card
     public Shan()
     {
         name = "shan";
-        chName = "闪";
     }
 }

@@ -12,6 +12,7 @@ namespace UI
         private static readonly Button ConfirmButton;
         private static readonly Button CancelButton;
         private static readonly TextMeshProUGUI TurnNumberText;
+        private static readonly Image AvtarImage;
 
         static TurnSystemUI()
         {
@@ -33,6 +34,11 @@ namespace UI
             }
             path = "UI/TurnSystemUI/TurnNumberText";
             if (!GameObject.Find(path).TryGetComponent(out TurnNumberText))
+            {
+                Debug.LogError($"Cann't find {path} !");
+            }
+            path = "UI/PlayerUI/Avtar/Image";
+            if (!GameObject.Find(path).TryGetComponent(out AvtarImage))
             {
                 Debug.LogError($"Cann't find {path} !");
             }
@@ -61,6 +67,7 @@ namespace UI
             unit.OnCanCancel += Unit_OnCanCancel;
             Unit_OnCanCancel(unit.CanCancel);
             EndTurnButton.gameObject.SetActive(unit.isEnemy == false && unit == TurnSystem.InTurnPlayer);
+            AvtarImage.sprite = unit.Skin;
         }
         private static void TurnSystem_OnCurrentUnitLeave(Unit unit)
         {

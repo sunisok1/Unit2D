@@ -9,11 +9,13 @@ public class GameManager : MonoBehaviour
         CardUICreater.Init();
 
         Unit unit1 = UnitManager.SpawnUnit(0, 0, "01", false);
-        Character character = Standard.GetCharacter("liubei");
-        unit1.SetCharactor(character);
         Unit unit2 = UnitManager.SpawnUnit(1, 1, "02", false);
         Unit unit3 = UnitManager.SpawnUnit(1, 4, "03", false);
         Unit unit4 = UnitManager.SpawnUnit(1, 5, "04", false);
+        unit1.SetCharactor(Standard.GetCharacter("liubei"));
+        unit2.SetCharactor(Standard.GetCharacter("guanyu"));
+        unit3.SetCharactor(Standard.GetCharacter("zhangfei"));
+        unit4.SetCharactor(Standard.GetCharacter("caocao"));
 
         TurnSystem.StartGame();
     }

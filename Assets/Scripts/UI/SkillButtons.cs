@@ -8,6 +8,11 @@ public class SkillButtons : MonoBehaviour
     [SerializeField] private RectTransform skillButtonPrefab;
     private readonly List<RectTransform> buttons = new();
 
+    private void Awake()
+    {
+
+    }
+
     public void AddButton()
     {
         buttons.Add(Instantiate(skillButtonPrefab, transform));

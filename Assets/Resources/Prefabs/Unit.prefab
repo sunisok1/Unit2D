@@ -441,6 +441,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chosenVisual: {fileID: 1393683180100220336}
+  image: {fileID: 7902384522449125081}
 --- !u!114 &1131310554570169151
 MonoBehaviour:
   m_ObjectHideFlags: 0
