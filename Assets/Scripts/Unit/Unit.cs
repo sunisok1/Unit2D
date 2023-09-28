@@ -423,11 +423,11 @@ public class Unit : MonoBehaviour
         CheckCurrentUnit();
         CanCancel = false;
         bool ready_pre = true;
+        Coroutine coroutine = null;
         while (true)
         {
             yield return null;
             bool ready = SelectedCard != null;
-            Coroutine coroutine = null;
             //与上一帧相比发生变化时再进行，避免每一帧都进行无意义的调用
             if (ready != ready_pre)
             {
@@ -479,6 +479,7 @@ public class Unit : MonoBehaviour
         int count_pre = 0;
         while (true)
         {
+            Debug.Log("te");
             yield return null;
             if (count_pre != targets.Count)
             {
