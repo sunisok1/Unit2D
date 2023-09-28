@@ -39,16 +39,16 @@ namespace UI
         private static void TurnSystem_OnCurrentUnitLeave(object obj)
         {
             Unit unit = obj as Unit;
-            unit.OnAddCard -= Unit_OnAddCard;
-            unit.OnRemoveCard -= Unit_OnRemoveCard;
+            unit.hand.OnAdd -= Unit_OnAddCard;
+            unit.hand.OnRemove -= Unit_OnRemoveCard;
         }
         private static void TurnSystem_OnCurrentUnitEnter(object obj)
         {
             Unit unit = obj as Unit;
-            unit.OnAddCard += Unit_OnAddCard;
-            unit.OnRemoveCard += Unit_OnRemoveCard;
+            unit.hand.OnAdd += Unit_OnAddCard;
+            unit.hand.OnRemove += Unit_OnRemoveCard;
             ClearAll();
-            CreateCard(unit.GetCards('h'));
+            CreateCard(unit.hand);
         }
 
         private static void Unit_OnRemoveCard(Card card)

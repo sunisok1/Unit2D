@@ -10,15 +10,48 @@ public static class Standard
 
     static Standard()
     {
-        Skill jianxiong = new()
+        Skill rende1 = new TriggerSkill()
         {
-            trigger = Trigger.damageEnd,
-            content = () =>
+            name = nameof(rende1),
+            trigger = (Triggerer.player, Timing.phaseUseBegin),
+            silent = true,
+            direct = true,
+            content = (e) =>
             {
-                Debug.Log("发动奸雄");
-            },
+                Debug.Log("重置仁德数量");
+                e.player.storage["rende"] = 0;
+            }
         };
-        characters.Add(new("liubei", 1, Sex.male, Country.shu, 4));
+        Skill rende = new ActiveSkill()
+        {
+            name = nameof(rende),
+            enable = Timing.phaseUse,
+            filterCard = (card) => true,
+            selectCard = (1, int.MaxValue),
+            discard = false,
+            filterTarget = (card, player, target) =>
+            {
+                return player != target;
+            },
+            check = (card) =>
+            {
+                throw new System.NotImplementedException();
+            },
+            content = (e) =>
+            {
+                e.player.Give(e.cards, e.target);
+                int pre_rende = (int)e.player.storage["rende"];
+                int rende = pre_rende + e.cards.Count;
+                e.player.storage["rende"] = rende;
+                if (pre_rende < 2 && rende >= 2)
+                {
+                    Debug.Log($"{e.player}发动仁德回血效果");
+                }
+            },
+            CompanionSkills = new Skill[] { rende1 },
+        };
+
+        characters.Add(new("liubei", 1, Sex.male, Country.shu, 4, rende));
         characters.Add(new("guanyu", 2, Sex.male, Country.shu, 4));
         characters.Add(new("zhangfei", 3, Sex.male, Country.shu, 4));
         characters.Add(new("zhugeliang", 4, Sex.male, Country.shu, 3));
@@ -32,7 +65,7 @@ public static class Standard
         characters.Add(new("zhouyu", 12, Sex.male, Country.wu, 3));
         characters.Add(new("daqiao", 13, Sex.female, Country.wu, 3));
         characters.Add(new("luxun", 14, Sex.male, Country.wu, 3));
-        characters.Add(new("caocao", 15, Sex.male, Country.wei, 4, jianxiong));
+        characters.Add(new("caocao", 15, Sex.male, Country.wei, 4));
         characters.Add(new("simayi", 16, Sex.male, Country.wei, 3));
         characters.Add(new("xiahoudun", 17, Sex.male, Country.wei, 4));
         characters.Add(new("zhangliao", 18, Sex.male, Country.wei, 4));

@@ -1,7 +1,13 @@
 using System;
 
 [Flags]
-public enum Trigger
+public enum Timing
 {
+    phaseUseBegin,
+    phaseUse,
     damageEnd
+}
+public enum Triggerer
+{
+    global, player, source
 }

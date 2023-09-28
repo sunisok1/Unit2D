@@ -34,8 +34,8 @@ namespace UI
         {
             yield return new WaitForEndOfFrame();
 
-            CardNameText.text = Lib.Translate[card.Name];
-            Image.sprite = Resources.Load<Sprite>(ImagePath + card.Name);
+            CardNameText.text = card.chName;
+            Image.sprite = Resources.Load<Sprite>(ImagePath + card.name);
             SetColor(card.interactable);
             card.OnSelected += Card_OnSelected;
             card.OnGoToDiscardPile += Card_OnGoToDiscardPile;

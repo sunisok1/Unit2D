@@ -5,7 +5,9 @@ public abstract class Card
 {
     public Unit owner;
 
-    public string Name { get; protected set; }
+    public string name;
+
+    public string chName;
 
     public int targetNum;
 
@@ -46,7 +48,8 @@ public class Sha : Card
     public int damage = 1;
     public Sha()
     {
-        Name = "sha";
+        name = "sha";
+        chName = "杀";
         targetFilter = (unit) =>
         {
             return unit != owner;
@@ -68,6 +71,7 @@ public class Shan : Card
 {
     public Shan()
     {
-        Name = "shan";
+        name = "shan";
+        chName = "闪";
     }
 }

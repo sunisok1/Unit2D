@@ -53,9 +53,9 @@ namespace UI
                 Sex.female => CardAudioClipDic_famale,
                 _ => throw new System.NotImplementedException()
             };
-            if (!dic.TryGetValue(card.Name, out AudioClip clip))
+            if (!dic.TryGetValue(card.name, out AudioClip clip))
             {
-                clip = Resources.Load<AudioClip>($"Audio/card/{(unit as Unit).sex}/" + card.Name);
+                clip = Resources.Load<AudioClip>($"Audio/card/{(unit as Unit).sex}/" + card.name);
             }
             audioSource.PlayOneShot(clip);
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 using Unity.VisualScripting;
 using UnityEngine;
 using static UnityEngine.UIElements.UxmlAttributeDescription;
@@ -27,7 +28,7 @@ public class Unit : MonoBehaviour
     /// <summary>
     /// 手牌
     /// </summary>
-    private readonly List<Card> hand = new();
+    public readonly ListWithEvent<Card> hand = new();
 
     private Character character;
 
@@ -39,13 +40,11 @@ public class Unit : MonoBehaviour
     private readonly List<Unit> targets = new();
     public Phase Phase { get; set; }
 
+    public Dictionary<string, object> storage = new();
+
     #endregion
 
     #region Events
-    // 加入手牌时调用
-    public event Action<Card> OnAddCard;
-    //离开手牌时调用
-    public event Action<Card> OnRemoveCard;
     // 更改被选择状态时调用
     public event Action<bool> OnChosen;
     //更改可选择性时调用
@@ -59,7 +58,9 @@ public class Unit : MonoBehaviour
     //受伤时调用
     public event Action<int> OnBeDamaged;
     #region SkillEvents
-    private event Action OnDamageEnd;
+    private event Action<UnitEventArgs> OnPhaseUseBegin;
+    private event Action<UnitEventArgs> OnDamageEnd;
+    private UnitEventArgs evnetArgs = new();
     #endregion
     #endregion
 
@@ -89,10 +90,11 @@ public class Unit : MonoBehaviour
         gridPositon = GridSystem.GetGridPositon(transform.position);
         GridSystem.AddUnitAtGridPosition(gridPositon.x, gridPositon.y, this);
 
-        OnAddCard += Unit_OnAddCard;
-        OnRemoveCard += Unit_OnRemoveCard;
+        hand.OnAdd += Unit_OnAddCard;
+        hand.OnRemove += Unit_OnRemoveCard;
 
         OnChosen += Unit_OnChosen;
+        evnetArgs.player = this;
     }
 
     public void Leave()
@@ -211,7 +213,7 @@ public class Unit : MonoBehaviour
         bool DefalutFilter(Card card)
         {
 
-            switch (card.Name)
+            switch (card.name)
             {
                 case "sha":
                     if (shaNum >= 1)
@@ -224,23 +226,6 @@ public class Unit : MonoBehaviour
             }
         }
 
-    }
-
-    public void ResetCards()
-    {
-        foreach (Card card in hand)
-        {
-            card.Selected = false;
-        }
-    }
-
-    public IEnumerable<Card> GetCards(char type)
-    {
-        if (type == 'h')
-        {
-            return hand;
-        }
-        return null;
     }
     #endregion
 
@@ -259,10 +244,11 @@ public class Unit : MonoBehaviour
 
             //step 2:
             Phase = Phase.draw;
-            Draw(6);
+            Draw(2);
 
             //step 3:
             Phase = Phase.use;
+            OnPhaseUseBegin?.Invoke(evnetArgs);
             Coroutine coroutine = null;
             while (true)
             {
@@ -289,7 +275,6 @@ public class Unit : MonoBehaviour
         {
             Card card = Deck.GetOne();
             hand.Add(card);
-            OnAddCard(card);
         }
     }
     //使用
@@ -297,21 +282,21 @@ public class Unit : MonoBehaviour
     {
         foreach (Unit unit in targets)
         {
-            Debug.Log($"{name}对{unit}使用了{card.Name}");
+            Debug.Log($"{name}对{unit}使用了{card.name}");
         }
         hand.Remove(card);
         OnUseOrRespondCard?.Invoke(this, card);
         card.Use(targets);
-        if (card.Name == "sha")
+        if (card.name == "sha")
             shaNum--;
-        else if (card.Name == "jiu")
+        else if (card.name == "jiu")
             jiuNum--;
         SelectedCard = null;
     }
     //打出
     public void Respond(Card card)
     {
-        Debug.Log($"{name}打出了{Lib.Translate[card.Name]}");
+        Debug.Log($"{name}打出了{card.chName}");
         hand.Remove(card);
         OnUseOrRespondCard?.Invoke(this, card);
         card.Respond();
@@ -320,11 +305,11 @@ public class Unit : MonoBehaviour
     //成为目标
     public void BeTargeted(Card card)
     {
-        Debug.Log($"{name}成为{Lib.Translate[card.Name]}的目标");
+        Debug.Log($"{name}成为{card.chName}的目标");
         switch (card)
         {
             case Sha sha:
-                StartCoroutine(ChooseToRespond((card) => card.Name == "shan", () => Damage(sha.damage)));
+                StartCoroutine(ChooseToRespond((card) => card.name == "shan", () => Damage(sha.damage)));
                 break;
             default:
                 break;
@@ -336,7 +321,7 @@ public class Unit : MonoBehaviour
         Debug.Log($"{name}受到{amount}点伤害，当前生命值为{hp}");
         hp -= amount;
         OnBeDamaged?.Invoke(amount);
-        OnDamageEnd?.Invoke();
+        OnDamageEnd?.Invoke(evnetArgs);
     }
     //设置武将
     public void SetCharactor(Character character)
@@ -352,14 +337,55 @@ public class Unit : MonoBehaviour
     //添加技能
     public void AddSkill(Skill skill)
     {
-        switch (skill.trigger)
+        if (skill.CompanionSkills != null)
         {
-            case Trigger.damageEnd:
-                OnDamageEnd += skill.content;
+            foreach (Skill companionSkill in skill.CompanionSkills)
+            {
+                AddSkill(companionSkill);
+            }
+        }
+        switch (skill)
+        {
+            case TriggerSkill triggerSkill:
+                switch (triggerSkill.trigger)
+                {
+                    case (Triggerer.player, Timing.phaseUseBegin):
+                        OnPhaseUseBegin += skill.content;
+                        break;
+                    case (Triggerer.player, Timing.damageEnd):
+                        OnDamageEnd += skill.content;
+                        break;
+                    default:
+                        throw new NotImplementedException("没有对应技能触发事件");
+                }
+                break;
+            case ActiveSkill activeSkill:
+                switch (activeSkill.enable)
+                {
+                    case Timing.phaseUse:
+                        break;
+                    default:
+                        throw new NotImplementedException("没有对应技能开启时机");
+                }
                 break;
             default:
-                throw new NotImplementedException("没有对应技能触发事件");
+                throw new NotImplementedException("技能类型异常");
         }
+        Debug.Log($"{name}添加了技能{skill.name}");
+    }
+    //交给目标角色手牌
+    public void Give(IEnumerable<Card> cards, Unit target)
+    {
+        foreach (Card card in cards)
+        {
+            hand.Remove(card);
+        }
+        target.Gain(cards);
+    }
+    //获得手牌
+    public void Gain(IEnumerable<Card> cards)
+    {
+        hand.AddRange(cards);
     }
     #endregion
 

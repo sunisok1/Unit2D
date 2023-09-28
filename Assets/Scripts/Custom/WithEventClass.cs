@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine.UIElements;
 
 public class ListWithEvent<T> : List<T>
 {
@@ -11,6 +10,15 @@ public class ListWithEvent<T> : List<T>
         base.Add(item);
         OnAdd?.Invoke(item);
     }
+
+    public new void AddRange(IEnumerable<T> items)
+    {
+        foreach (T item in items)
+        {
+            Add(item);
+        }
+    }
+
     public new void Remove(T item)
     {
         base.Remove(item);
