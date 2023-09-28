@@ -164,5 +164,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cellSize: {x: 75, y: 30}
-  spacing: {x: 0, y: 0}
+  spacing: {x: 15, y: 5}
   skillButtonPrefab: {fileID: 1978247432489457392, guid: b8a965a20a868844d9bcc74ae91ea73b, type: 3}
