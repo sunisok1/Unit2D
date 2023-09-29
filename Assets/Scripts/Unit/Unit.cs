@@ -19,36 +19,34 @@ public class Unit : MonoBehaviour
 
     private int hp = 4;
 
-    private int shaNum = 2;
+    private int shaNum = 1;
 
     private int jiuNum = 1;
 
     private Vector2Int gridPositon;
 
-
-    /// <summary>
     /// 手牌
-    /// </summary>
     public readonly ListWithEvent<Card> hand = new();
 
     private Character character;
 
     //下家
     [NonSerialized] public Unit next;
-    //选择的牌
-    private Card SelectedCard;
-    //选择的单位
-    private readonly List<Unit> targets = new();
+
     public Phase Phase { get; set; }
 
     public Dictionary<string, object> storage = new();
 
     private Sprite skin;
+
+    public List<Skill> skillList = new();
+
+    public bool isZhu = false;
     #endregion
 
     #region Events
     // 更改被选择状态时调用
-    public event Action<bool> OnChosen;
+    public event EventHandler OnChosen;
     //更改可选择性时调用
     public event Action<bool> OnInteractable;
     //可确定时调用
@@ -64,9 +62,11 @@ public class Unit : MonoBehaviour
     //设置皮肤时调用
     public event Action<Sprite> OnSetSkin;
     #region SkillEvents
+    private readonly UnitEventArgs unitEventArgs = new();
+
     private event Action<UnitEventArgs> OnPhaseUseBegin;
+
     private event Action<UnitEventArgs> OnDamageEnd;
-    private UnitEventArgs evnetArgs = new();
     #endregion
     #endregion
 
@@ -83,11 +83,22 @@ public class Unit : MonoBehaviour
     public void EndUse()
     {
         State = UnitState.EndUse;
-        SelectedCard = null;
-        StopSelectingTarget();
         foreach (Card card in hand)
         {
             card.interactable = false;
+        }
+    }
+
+    public void UseSkill(Skill skill)
+    {
+        switch (skill)
+        {
+            case ActiveSkill activeSkill:
+                unitEventArgs.Reset();
+                StartCoroutine(SkillProcess(activeSkill));
+                break;
+            default:
+                break;
         }
     }
     #endregion
@@ -100,13 +111,10 @@ public class Unit : MonoBehaviour
         hand.OnRemove += Unit_OnRemoveCard;
 
         OnChosen += Unit_OnChosen;
-        evnetArgs.player = this;
+
+        unitEventArgs.player = this;
     }
 
-    public void Leave()
-    {
-        StopSelectingTarget();
-    }
 
 
     #region Attribute
@@ -131,7 +139,7 @@ public class Unit : MonoBehaviour
         {
             if (chosen == value) return;
             chosen = value;
-            OnChosen?.Invoke(value);
+            OnChosen?.Invoke(this, TurnSystem.InActionPlayer.unitEventArgs);
         }
     }
 
@@ -191,23 +199,27 @@ public class Unit : MonoBehaviour
         Card card = obj as Card;
         if (value)
         {
-            SelectedCard = card;
+            unitEventArgs.card = card;
+            unitEventArgs.cards.Add(card);
         }
         else
         {
-            SelectedCard = null;
+            unitEventArgs.card = null;
+            unitEventArgs.cards.Remove(card);
         }
     }
 
-    private void Unit_OnChosen(bool value)
+    private void Unit_OnChosen(object sender, EventArgs e)
     {
-        if (value)
+        Unit unit = sender as Unit;
+        UnitEventArgs unitEventArgs = e as UnitEventArgs;
+        if (unit.chosen)
         {
-            TurnSystem.InActionPlayer.targets.Add(this);
+            unitEventArgs.targets.Add(unit);
         }
         else
         {
-            TurnSystem.InActionPlayer.targets.Remove(this);
+            unitEventArgs.targets.Remove(unit);
         }
     }
 
@@ -219,9 +231,13 @@ public class Unit : MonoBehaviour
     /// 更新手牌可交互性
     /// </summary>
     /// <param name="filter"></param>
-    public void UpdateCardInteractable(Func<Card, bool> filter = null)
+    public void UpdateCardInteractable(Func<Card, bool> filter = null, bool ready = false)
     {
         filter ??= DefalutFilter;
+        if (ready)
+        {
+            filter = (card) => unitEventArgs.cards.Contains(card);
+        }
         foreach (var card in hand)
         {
             card.interactable = filter(card);
@@ -249,41 +265,9 @@ public class Unit : MonoBehaviour
     //开启回合
     public void StartTurn()
     {
-        StartCoroutine(startTurn());
-        IEnumerator startTurn()
-        {
-            TurnSystem.SetInTurnPlayer(this);
-            //step 0:
-
-            //step 1:
-            Phase = Phase.begin;
-
-            //step 2:
-            Phase = Phase.draw;
-            Draw(2);
-
-            //step 3:
-            Phase = Phase.use;
-            OnPhaseUseBegin?.Invoke(evnetArgs);
-            Coroutine coroutine = null;
-            while (true)
-            {
-                yield return null;
-                coroutine ??= StartCoroutine(ChooseToUse());
-                if (State == UnitState.EndUse)
-                {
-                    State = UnitState.Waiting;
-                    StopCoroutine(coroutine);
-                    break;
-                }
-            }
-            //step 4:
-            Phase = Phase.end;
-
-            yield return null;
-            TurnSystem.NextTurn();
-        }
+        StartCoroutine(TurnProcess());
     }
+
     //摸牌
     public void Draw(int amount = 1)
     {
@@ -296,18 +280,19 @@ public class Unit : MonoBehaviour
     //使用
     public void Use(Card card)
     {
-        foreach (Unit unit in targets)
+        foreach (Unit unit in unitEventArgs.targets)
         {
             Debug.Log($"{Lib.Translate(name)}对{Lib.Translate(unit.name)}使用了{card.name}");
         }
         hand.Remove(card);
         OnUseOrRespondCard?.Invoke(this, card);
-        card.Use(targets);
+        card.Use(unitEventArgs.targets);
         if (card.name == "sha")
             shaNum--;
         else if (card.name == "jiu")
             jiuNum--;
-        SelectedCard = null;
+        unitEventArgs.card = null;
+        unitEventArgs.cards.Remove(card);
     }
     //打出
     public void Respond(Card card)
@@ -316,7 +301,8 @@ public class Unit : MonoBehaviour
         hand.Remove(card);
         OnUseOrRespondCard?.Invoke(this, card);
         card.Respond();
-        SelectedCard = null;
+        unitEventArgs.card = null;
+        unitEventArgs.cards.Remove(card);
     }
     //成为目标
     public void BeTargeted(Card card)
@@ -325,7 +311,7 @@ public class Unit : MonoBehaviour
         switch (card)
         {
             case Sha sha:
-                StartCoroutine(ChooseToRespond((card) => card.name == "shan", () => Damage(sha.damage)));
+                StartCoroutine(ChooseToRespond((card) => card.name == "shan", () => Damage(1)));
                 break;
             default:
                 break;
@@ -337,7 +323,7 @@ public class Unit : MonoBehaviour
         Debug.Log($"{Lib.Translate(name)}受到{amount}点伤害，当前生命值为{hp}");
         hp -= amount;
         OnBeDamaged?.Invoke(amount);
-        OnDamageEnd?.Invoke(evnetArgs);
+        OnDamageEnd?.Invoke(unitEventArgs);
     }
     //设置武将
     public void SetCharactor(Character character)
@@ -356,7 +342,9 @@ public class Unit : MonoBehaviour
     //添加技能
     public void AddSkill(Skill skill)
     {
+        if (skill.type == SkillType.zhu && isZhu == false) return;
         OnAddSkill?.Invoke(skill);
+        skillList.Add(skill);
         if (skill.CompanionSkills != null)
         {
             foreach (Skill companionSkill in skill.CompanionSkills)
@@ -388,10 +376,12 @@ public class Unit : MonoBehaviour
                         throw new NotImplementedException("没有对应技能开启时机");
                 }
                 break;
+            case ViewAsSkill viewAsSkill:
+                break;
             default:
                 throw new NotImplementedException("技能类型异常");
         }
-        Debug.Log($"{Lib.Translate(name)}添加了技能{skill.name}");
+        //Debug.Log($"{Lib.Translate(name)}添加了技能{Lib.Translate(skill.name)}");
     }
     //交给目标角色手牌
     public void Give(IEnumerable<Card> cards, Unit target)
@@ -410,178 +400,179 @@ public class Unit : MonoBehaviour
     #endregion
 
     #region Operations
-    private Unit CheckCurrentUnit()
+    private void StopChoosingCard(ref Coroutine coroutine)
     {
-        if (TurnSystem.InActionPlayer != this && isEnemy == false)
+        StopCoroutine(coroutine);
+        UpdateCardInteractable((c) => false);
+        coroutine = null;
+        Debug.Log($"停止了选择卡牌协程{coroutine}");
+    }
+    private void StopChoosingTarget(ref Coroutine coroutine)
+    {
+        StopCoroutine(coroutine);
+        UnitManager.UpdateUnitInteractable(unitEventArgs, (u) => false);
+        coroutine = null;
+        Debug.Log($"停止了选择目标协程{coroutine}");
+    }
+
+    private Unit CheckCurrentUnit(Unit unit = null)
+    {
+        if (unit == null)
+        {
+            unit = this;
+        }
+        if (TurnSystem.InActionPlayer != unit)
         {
             Unit pre = TurnSystem.InActionPlayer;
-            TurnSystem.InActionPlayer = this;
+            TurnSystem.InActionPlayer = unit;
             return pre;
         }
         return null;
     }
 
-    private void StopSelectingTarget()
-    {
-        try
-        {
-            while (targets.Count > 0)
-            {
-                targets[0].Chosen = false;
-            }
-        }
-        catch (Exception e)
-        {
-            throw e;
-        }
-        UnitManager.UpdateUnitInteractable((unit) => false);
-    }
-
-    public IEnumerator ChooseToUse()
-    {
-        yield return new WaitForEndOfFrame();
-        CheckCurrentUnit();
-        CanCancel = false;
-        bool ready_pre = true;
-        Coroutine coroutine = null;
-        while (true)
-        {
-            yield return null;
-            bool ready = SelectedCard != null;
-            //与上一帧相比发生变化时再进行，避免每一帧都进行无意义的调用
-            if (ready != ready_pre)
-            {
-                ready_pre = ready;
-                if (ready)
-                {
-                    //如果就绪，将除选择牌以外的牌可选择性改成false
-                    UpdateCardInteractable((card) => card == SelectedCard);
-                    coroutine = StartCoroutine(ChooseUseTarget(SelectedCard.targetFilter, SelectedCard.targetNum, callback));
-                    void callback()
-                    {
-                        Use(SelectedCard);
-                    }
-                    CanCancel = true;
-                }
-                else
-                {
-                    if (coroutine != null)
-                    {
-                        StopSelectingTarget();
-                        StopCoroutine(coroutine);
-                    }
-                    UpdateCardInteractable();
-                    CanConfirm = false;
-                    CanCancel = false;
-                }
-            }
-            if (State == UnitState.Canceled)
-            {
-                if (coroutine != null)
-                {
-                    StopSelectingTarget();
-                    StopCoroutine(coroutine);
-                }
-                SelectedCard.Selected = false;
-                SelectedCard = null;
-                CanCancel = false;
-                UpdateCardInteractable();
-            }
-        }
-    }
-
-    public IEnumerator ChooseUseTarget(Func<Unit, bool> filter, int num, Action callback)
-    {
-        yield return new WaitForEndOfFrame();
-        CheckCurrentUnit();
-        CanConfirm = false;
-        UnitManager.UpdateUnitInteractable(filter);
-        int count_pre = 0;
-        while (true)
-        {
-            yield return null;
-            if (count_pre != targets.Count)
-            {
-                count_pre = targets.Count;
-                bool ready = targets.Count == num;
-                if (ready)
-                {
-                    UnitManager.UpdateUnitInteractable((unit) => targets.Contains(unit));
-                }
-                else
-                {
-                    UnitManager.UpdateUnitInteractable(filter);
-                }
-                CanConfirm = ready;
-            }
-            switch (State)
-            {
-                case UnitState.Waiting:
-                    break;
-                case UnitState.Confirmed:
-                    callback();
-                    CanConfirm = false;
-                    UpdateCardInteractable();
-                    StopSelectingTarget();
-                    yield break;
-                case UnitState.Canceled:
-                    CanConfirm = false;
-                    StopSelectingTarget();
-                    yield break;
-                default:
-                    break;
-            }
-        }
-    }
-
     public IEnumerator ChooseToRespond(Func<Card, bool> filter, Action fail = null)
     {
-        yield return new WaitForEndOfFrame();
         Unit pre = CheckCurrentUnit();
+        Coroutine cardCoroutine = null;
+        Signal signal = new((val) => CanConfirm = val);
         CanCancel = true;
+        while (true)
+        {
+            yield return null;
+            cardCoroutine ??= StartCoroutine(ChooseCards(filter, (1, 1), signal));
+
+            switch (State)
+            {
+                case UnitState.Waiting:
+                    break;
+                case UnitState.Confirmed:
+                    Respond(unitEventArgs.card);
+                    goto default;
+                case UnitState.Canceled:
+                    fail?.Invoke();
+                    goto default;
+                default:
+                    CheckCurrentUnit(pre);
+                    State = UnitState.Waiting;
+                    StopChoosingCard(ref cardCoroutine);
+                    yield break;
+            }
+        }
+    }
+
+
+    public IEnumerator ChooseCards(Func<Card, bool> filter, (int, int) range, Signal signal)
+    {
+        CheckCurrentUnit();
         bool ready_pre = true;
         while (true)
         {
             yield return null;
-            bool ready = SelectedCard != null && filter(SelectedCard);
+            bool ready = unitEventArgs.cards.Count.Between(range);
             if (ready != ready_pre)
             {
-                ready_pre = ready;
-                if (ready)
-                {
-                    UpdateCardInteractable((card) => card == SelectedCard);
-                    CanConfirm = true;
-                }
-                else
-                {
-                    CanConfirm = false;
-                    UpdateCardInteractable(filter);
-                }
+                signal.Ready = ready_pre = ready;
+                UpdateCardInteractable(filter, ready);
+            }
+        }
+    }
+
+    public IEnumerator ChooseTargets(Func<Unit, bool> filter, (int, int) range, Signal signal)
+    {
+        CheckCurrentUnit();
+        bool ready_pre = true;
+        while (true)
+        {
+            yield return null;
+            bool ready = unitEventArgs.targets.Count.Between(range);
+            if (ready != ready_pre)
+            {
+                signal.Ready = ready_pre = ready;
+                UnitManager.UpdateUnitInteractable(unitEventArgs, filter, ready);
+            }
+        }
+    }
+
+    private IEnumerator TurnProcess()
+    {
+        TurnSystem.SetInTurnPlayer(this);
+        //step 0:
+        shaNum = 1;
+        jiuNum = 1;
+        //step 1:
+        Phase = Phase.begin;
+
+        //step 2:
+        Phase = Phase.draw;
+        Draw(2);
+
+        //step 3:
+        Phase = Phase.use;
+
+        OnPhaseUseBegin?.Invoke(unitEventArgs);
+
+        Coroutine cardCoroutine = null;
+        Coroutine targetCoroutine = null;
+        Signal cardSignal = new((val) => CanCancel = val);
+        Signal targetSignal = new((val) => CanConfirm = val);
+        unitEventArgs.Reset();
+
+        Card card = null;
+        bool @using = true;
+
+        cardCoroutine = StartCoroutine(ChooseCards(null, (1, 1), cardSignal));
+        while (@using)
+        {
+            yield return new WaitUntil(() => TurnSystem.InActionPlayer == this);
+            switch (cardSignal.Ready)
+            {
+                case true when targetCoroutine == null:
+                    card = unitEventArgs.cards[0];
+                    targetCoroutine = StartCoroutine(ChooseTargets(card.targetFilter, card.targetNum, targetSignal));
+                    break;
+                case false when targetCoroutine != null:
+                    StopChoosingTarget(ref targetCoroutine);
+                    break;
             }
             switch (State)
             {
                 case UnitState.Waiting:
                     break;
                 case UnitState.Confirmed:
-                    Respond(SelectedCard);
+                    Use(card);
                     CanConfirm = false;
-                    UpdateCardInteractable();
-                    TurnSystem.InActionPlayer = pre;
-                    yield break;
+                    goto default;
                 case UnitState.Canceled:
-                    CanConfirm = false;
-                    fail?.Invoke();
-                    TurnSystem.InActionPlayer = pre;
-                    yield break;
+                    goto default;
+                case UnitState.EndUse:
+                    @using = false;
+                    StopChoosingCard(ref cardCoroutine);
+                    goto default;
                 default:
+                    State = UnitState.Waiting;
+                    unitEventArgs.Reset();
+                    cardSignal.Ready = false;
+                    if (targetCoroutine != null)
+                    {
+                        StopChoosingTarget(ref targetCoroutine); ;
+                        targetSignal.Ready = false;
+                    }
                     break;
             }
         }
-    }
+        //step 4:
+        Phase = Phase.end;
 
-    public IEnumerator ChooseWhetherToActivateSkill()
+        yield return null;
+        TurnSystem.NextTurn();
+    }
+    public IEnumerator SkillProcess(ActiveSkill skill)
     {
-        yield break;
+        //while (true)
+        //{
+        yield return null;
+        //    coroutine ??= StartCoroutine(ChooseCard(skill.filterCard, skill.selectCard, signal));
+        //}
     }
     #endregion
 }

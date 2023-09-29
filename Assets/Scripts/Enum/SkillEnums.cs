@@ -11,3 +11,8 @@ public enum Triggerer
 {
     global, player, source
 }
+
+public enum SkillType
+{
+    common, locking, zhu
+}

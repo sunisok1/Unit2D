@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5423084343108653389}
   - component: {fileID: 2620187059438386398}
   - component: {fileID: 8930235767793571032}
-  - component: {fileID: 7295346902868434853}
+  - component: {fileID: 6652504420318491764}
   m_Layer: 5
   m_Name: SkillButton
   m_TagString: Untagged
@@ -70,7 +70,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: c1ad3937066e2a44dbf2d6d4ee26321b, type: 3}
-  m_Type: 0
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -123,7 +123,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &7295346902868434853
+--- !u!114 &6652504420318491764
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -132,17 +132,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 2238031901153832796}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Script: {fileID: 11500000, guid: aef23c310d16a8e46a4e37f876c92d51, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_IgnoreLayout: 1
-  m_MinWidth: 150
-  m_MinHeight: -1
-  m_PreferredWidth: 75
-  m_PreferredHeight: 30
-  m_FlexibleWidth: -1
-  m_FlexibleHeight: -1
-  m_LayoutPriority: 1
+  nameText: {fileID: 5459615893151149883}
+  button: {fileID: 8930235767793571032}
 --- !u!1 &2754525376317722981
 GameObject:
   m_ObjectHideFlags: 0
@@ -209,7 +203,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u4EC1\u5FB7"
+  m_text: "\u6280\u80FD"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: fe12ddfa71434e648b443e532a4ecf8c, type: 2}
   m_sharedMaterial: {fileID: 5415091809487334181, guid: fe12ddfa71434e648b443e532a4ecf8c, type: 2}
@@ -218,8 +212,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    rgba: 4278190080
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:

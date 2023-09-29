@@ -69,9 +69,13 @@ public static class UnitManager
         throw new System.NotImplementedException();
     }
 
-    internal static void UpdateUnitInteractable(Func<Unit, bool> filter = null)
+    public static void UpdateUnitInteractable(UnitEventArgs unitEventArgs, Func<Unit, bool> filter = null, bool ready = false)
     {
         filter ??= (unit) => false;
+        if (ready)
+        {
+            filter = (unit) => unitEventArgs.targets.Contains(unit);
+        }
         foreach (Unit unit in UnitList)
         {
             unit.Interactable = filter(unit);

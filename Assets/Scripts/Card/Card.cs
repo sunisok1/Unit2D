@@ -7,35 +7,32 @@ public abstract class Card
 
     public string name;
 
-    public int targetNum;
+    public (int, int) targetNum;
 
 
     public event EventHandler<bool> OnSelected;
-    public event Action OnGoToDiscardPile;
 
     public bool interactable;
 
-    private bool selected;
+    private bool chosen;
 
-    public bool Selected
+    public bool Chosen
     {
-        get => selected;
+        get => chosen;
         set
         {
-            if (selected == value) return;
-            selected = value;
+            if (chosen == value) return;
+            chosen = value;
             OnSelected?.Invoke(this, value);
         }
     }
 
     public virtual void Use(IEnumerable<Unit> targets)
     {
-        OnGoToDiscardPile?.Invoke();
     }
 
     public virtual void Respond()
     {
-        OnGoToDiscardPile?.Invoke();
     }
 
     public Func<Unit, bool> targetFilter;
@@ -43,7 +40,6 @@ public abstract class Card
 
 public class Sha : Card
 {
-    public int damage = 1;
     public Sha()
     {
         name = "sha";
@@ -51,8 +47,7 @@ public class Sha : Card
         {
             return unit != owner;
         };
-        targetNum = 1;
-        OnGoToDiscardPile += () => damage = 1;
+        targetNum = (1, 1);
     }
 
     public override void Use(IEnumerable<Unit> targets)

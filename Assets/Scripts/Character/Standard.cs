@@ -50,9 +50,19 @@ public static class Standard
             },
             CompanionSkills = new Skill[] { rende1 },
         };
+        Skill jijiang = new ActiveSkill()
+        {
+            name = nameof(jijiang),
+            type = SkillType.zhu,
+            enable = Timing.phaseUse,
+        };
+        Skill wusheng = new ViewAsSkill()
+        {
+            name = nameof(wusheng),
+        };
 
-        characters.Add(new("liubei", 1, Sex.male, Country.shu, 4, rende));
-        characters.Add(new("guanyu", 2, Sex.male, Country.shu, 4));
+        characters.Add(new("liubei", 1, Sex.male, Country.shu, 4, rende, jijiang));
+        characters.Add(new("guanyu", 2, Sex.male, Country.shu, 4, wusheng));
         characters.Add(new("zhangfei", 3, Sex.male, Country.shu, 4));
         characters.Add(new("zhugeliang", 4, Sex.male, Country.shu, 3));
         characters.Add(new("zhaoyun", 5, Sex.male, Country.shu, 4));

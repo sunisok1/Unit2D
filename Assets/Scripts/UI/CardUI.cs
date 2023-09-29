@@ -38,7 +38,6 @@ namespace UI
             Image.sprite = Resources.Load<Sprite>(ImagePath + card.name);
             SetColor(card.interactable);
             card.OnSelected += Card_OnSelected;
-            card.OnGoToDiscardPile += Card_OnGoToDiscardPile;
         }
 
         private void Update()
@@ -54,7 +53,6 @@ namespace UI
         public void OnDestroy()
         {
             card.OnSelected -= Card_OnSelected;
-            card.OnGoToDiscardPile -= Card_OnGoToDiscardPile;
         }
         /// <summary>
         /// 点击事件
@@ -64,7 +62,7 @@ namespace UI
         {
             if (card.interactable)
             {
-                card.Selected = !card.Selected;
+                card.Chosen = !card.Chosen;
             }
         }
 
@@ -72,10 +70,6 @@ namespace UI
         {
             //选中就上移40，反之下移40
             transform.Translate(new Vector3(0, value ? 40 : -40, 0));
-        }
-        private void Card_OnGoToDiscardPile()
-        {
-            Destroy(gameObject);
         }
         /// <summary>
         /// 设置颜色

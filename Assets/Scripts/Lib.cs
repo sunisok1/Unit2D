@@ -8,6 +8,14 @@ public static class Lib
     {
         LoadCard();
         LoadCharactor();
+        LaodSkill();
+    }
+
+    private static void LaodSkill()
+    {
+        dict["rende"] = "仁德";
+        dict["jijiang"] = "激将";
+        dict["wusheng"] = "武圣";
     }
 
     private static void LoadCharactor()

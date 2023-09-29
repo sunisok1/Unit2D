@@ -1,9 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UI;
 
 public abstract class Skill
 {
+    public SkillType type;
+    public Unit owner;
     public string name;
     public Action<UnitEventArgs> content = null;
     public Skill[] CompanionSkills;
@@ -51,9 +54,28 @@ public class ViewAsSkill : Skill
 
 }
 
-public class UnitEventArgs : System.EventArgs
+public class UnitEventArgs : EventArgs
 {
     public Unit player;
-    public List<Card> cards = new();
+    public readonly List<Card> cards = new();
+    public readonly List<Unit> targets = new();
+    public Card card;
     public Unit target;
+    public void Reset()
+    {
+        List<Card> cardList = new(cards);
+        foreach (Card card in cardList)
+        {
+            card.Chosen = false;
+        }
+        List<Unit> targetList = new(targets);
+        foreach (Unit target in targetList)
+        {
+            target.Chosen = false;
+        }
+        cards.Clear();
+        targets.Clear();
+        card = null;
+        target = null;
+    }
 }

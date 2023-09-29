@@ -18,9 +18,10 @@ namespace UI
         {
             unit = GetComponent<Unit>();
             unit.OnInteractable += Unit_OnInteractable;
-            unit.OnChosen += Unit_OnChosen;
+            unit.OnChosen += Unit_OnChosen; ;
             unit.OnSetSkin += Unit_OnSetSkin;
         }
+
 
         private void Unit_OnSetSkin(Sprite sprite)
         {
@@ -38,9 +39,10 @@ namespace UI
             chosenVisual.color = obj ? enableColor : disableColor;
         }
 
-        private void Unit_OnChosen(bool obj)
+        private void Unit_OnChosen(object sender, System.EventArgs e)
         {
-            chosenVisual.color = obj ? chosenColor : enableColor;
+            bool value = (sender as Unit).Chosen;
+            chosenVisual.color = value ? chosenColor : enableColor;
         }
     }
 }
