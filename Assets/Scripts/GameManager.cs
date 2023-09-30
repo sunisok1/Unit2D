@@ -1,5 +1,6 @@
 using UnityEngine;
 using UI;
+using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
@@ -15,7 +16,7 @@ public class GameManager : MonoBehaviour
         unit1.SetCharactor(Standard.GetCharacter("liubei"));
         unit2.SetCharactor(Standard.GetCharacter("guanyu"));
         unit3.SetCharactor(Standard.GetCharacter("zhangfei"));
-        unit4.SetCharactor(Standard.GetCharacter("caocao"));
+        unit4.SetCharactor(Standard.GetCharacter("huangyueying"));
 
         TurnSystem.StartGame();
     }

@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.ExceptionServices;
 using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.UI;
-using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 public class Unit : MonoBehaviour
 {
@@ -209,8 +206,6 @@ public class Unit : MonoBehaviour
         }
     }
 
-
-
     #endregion
 
     #region EventsFunc
@@ -326,11 +321,11 @@ public class Unit : MonoBehaviour
     {
         foreach (Unit unit in args.targets)
         {
-            Debug.Log($"{Lib.Translate(name)}对{Lib.Translate(unit.name)}使用了{card.name}");
+            Debug.Log($"{Lib.Translate(name)}对{Lib.Translate(unit.name)}使用了{Lib.Translate(card.name)}");
         }
         hand.Remove(card);
         OnUseOrRespondCard?.Invoke(this, card);
-        card.Use(args);
+        card.Use(args.targets);
         if (card.name == "sha")
             shaNum--;
         else if (card.name == "jiu")
@@ -349,13 +344,13 @@ public class Unit : MonoBehaviour
         args.cards.Remove(card);
     }
     //成为目标
-    public void BeTargeted(Args args, Card card)
+    public void BeTargeted(Card card)
     {
         Debug.Log($"{Lib.Translate(name)}成为{Lib.Translate(card.name)}的目标");
         switch (card)
         {
             case Sha sha:
-                StartCoroutine(ChooseToRespond((card) => card.name == "shan", () => args.player.DamageSource(this, 1 + args.player.Drunk)));
+                StartCoroutine(ChooseToRespond((card) => card.name == "shan", () => card.owner.DamageSource(this, sha.damage)));
                 break;
             default:
                 break;
@@ -579,6 +574,7 @@ public class Unit : MonoBehaviour
         //step 0:
         shaNum = 1;
         jiuNum = 1;
+        drunk = 0;
         //step 1:
         Phase = Phase.begin;
 

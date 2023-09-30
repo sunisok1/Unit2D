@@ -4,18 +4,17 @@ using UnityEditor.Experimental.GraphView;
 
 public abstract class Card
 {
-    public int point;
+    public readonly int point;
 
-    public Suit suit;
+    public readonly Suit suit;
 
-    public CardColor color;
+    public readonly CardColor color;
 
     public Unit owner;
 
     public string name;
 
     public (int, int) targetNum;
-
 
     public event EventHandler<bool> OnSelected;
 
@@ -34,12 +33,14 @@ public abstract class Card
         }
     }
 
-    public virtual void Use(Args args)
+    public virtual void Use(IEnumerable<Unit> targets)
     {
+        Reset();
     }
 
     public virtual void Respond()
     {
+        Reset();
     }
 
     public Func<Unit, bool> targetFilter;
@@ -56,11 +57,18 @@ public abstract class Card
             Suit.diamond => CardColor.red,
             _ => throw new NotImplementedException(),
         };
+        Reset();
+    }
+
+    protected virtual void Reset()
+    {
+        UnityEngine.Debug.Log("Reset");
     }
 }
 
 public class Sha : Card
 {
+    public int damage = 1;
     public Sha(int point, Suit suit) : base(point, suit)
     {
         name = "sha";
@@ -71,13 +79,18 @@ public class Sha : Card
         targetNum = (1, 1);
     }
 
-    public override void Use(Args args)
+    public override void Use(IEnumerable<Unit> targets)
     {
-        base.Use(args);
-        foreach (var unit in args.targets)
+        base.Use(targets);
+        foreach (var unit in targets)
         {
-            unit.BeTargeted(args, this);
+            unit.BeTargeted(this);
         }
+    }
+    protected override void Reset()
+    {
+        damage = 1;
+        targetNum = (1, 1);
     }
 }
 
@@ -109,12 +122,10 @@ public class Tao : Card
         name = "tao";
         targetNum = (0, 0);
     }
-    public override void Use(Args args)
+    public override void Use(IEnumerable<Unit> targets)
     {
-        base.Use(args);
-
-        args.target ??= args.player;
-        args.target.Recover();
+        base.Use(targets);
+        owner.Recover();
     }
 }
 
@@ -125,9 +136,9 @@ public class Jiu : Card
         name = "jiu";
         targetNum = (0, 0);
     }
-    public override void Use(Args args)
+    public override void Use(IEnumerable<Unit> targets)
     {
-        base.Use(args);
-        args.player.Drunk += 1;
+        base.Use(targets);
+        owner.Drunk += 1;
     }
 }
