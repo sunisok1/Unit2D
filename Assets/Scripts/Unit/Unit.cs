@@ -44,6 +44,8 @@ public class Unit : MonoBehaviour
     public List<Skill> skillList = new();
 
     public bool isZhu = false;
+
+    private int drunk = 0;
     #endregion
 
     #region Events
@@ -62,19 +64,23 @@ public class Unit : MonoBehaviour
     //血上限改变时调用
     public event Action<int> OnMaxHpChange;
     //受伤时调用
-    public event Action<int> OnBeDamaged;
+    public event Action<int> OnDamage;
+    //回血时调用
+    public event Action OnRecover;
     //死亡时调用
     public event EventHandler OnDead;
     //添加技能时调用
     public event Action<Skill> OnAddSkill;
     //设置皮肤时调用
     public event Action<Sprite> OnSetSkin;
+    //喝酒时调用
+    public event Action<int> OnDrunk;
     #region SkillEvents
-    private readonly UnitEventArgs unitEventArgs = new();
+    private readonly Args args = new();
 
-    private event Action<UnitEventArgs> OnPhaseUseBegin;
+    private event Action<Args> OnPhaseUseBegin;
 
-    private event Action<UnitEventArgs> OnDamageEnd;
+    private event Action<Args> OnDamageEnd;
     #endregion
     #endregion
 
@@ -102,7 +108,7 @@ public class Unit : MonoBehaviour
         switch (skill)
         {
             case ActiveSkill activeSkill:
-                unitEventArgs.Reset();
+                args.Reset();
                 StartCoroutine(SkillProcess(activeSkill));
                 break;
             default:
@@ -120,7 +126,7 @@ public class Unit : MonoBehaviour
 
         OnChosen += Unit_OnChosen;
 
-        unitEventArgs.player = this;
+        args.player = this;
     }
 
 
@@ -147,7 +153,7 @@ public class Unit : MonoBehaviour
         {
             if (chosen == value) return;
             chosen = value;
-            OnChosen?.Invoke(this, TurnSystem.InActionPlayer.unitEventArgs);
+            OnChosen?.Invoke(this, TurnSystem.InActionPlayer.args);
         }
     }
 
@@ -225,27 +231,27 @@ public class Unit : MonoBehaviour
         Card card = obj as Card;
         if (value)
         {
-            unitEventArgs.card = card;
-            unitEventArgs.cards.Add(card);
+            args.card = card;
+            args.cards.Add(card);
         }
         else
         {
-            unitEventArgs.card = null;
-            unitEventArgs.cards.Remove(card);
+            args.card = null;
+            args.cards.Remove(card);
         }
     }
 
     private void Unit_OnChosen(object sender, EventArgs e)
     {
         Unit unit = sender as Unit;
-        UnitEventArgs unitEventArgs = e as UnitEventArgs;
+        Args args = e as Args;
         if (unit.chosen)
         {
-            unitEventArgs.targets.Add(unit);
+            args.targets.Add(unit);
         }
         else
         {
-            unitEventArgs.targets.Remove(unit);
+            args.targets.Remove(unit);
         }
     }
 
@@ -262,7 +268,7 @@ public class Unit : MonoBehaviour
         filter ??= DefalutFilter;
         if (ready)
         {
-            filter = (card) => unitEventArgs.cards.Contains(card);
+            filter = (card) => args.cards.Contains(card);
         }
         foreach (var card in hand)
         {
@@ -271,14 +277,14 @@ public class Unit : MonoBehaviour
         bool DefalutFilter(Card card)
         {
 
-            switch (card.name)
+            switch (card)
             {
-                case "sha":
-                    if (shaNum >= 1)
-                    {
-                        return true;
-                    }
-                    return false;
+                case Sha:
+                    return shaNum >= 1;
+                case Tao:
+                    return Injured;
+                case Jiu:
+                    return jiuNum >= 1;
                 default:
                     return false;
             }
@@ -293,6 +299,18 @@ public class Unit : MonoBehaviour
     {
         StartCoroutine(TurnProcess());
     }
+    //是否受伤
+    public bool Injured => hp < MaxHp;
+
+    public int Drunk
+    {
+        get => drunk;
+        set
+        {
+            drunk = value;
+            OnDrunk?.Invoke(value);
+        }
+    }
 
     //摸牌
     public void Draw(int amount = 1)
@@ -306,19 +324,19 @@ public class Unit : MonoBehaviour
     //使用
     public void Use(Card card)
     {
-        foreach (Unit unit in unitEventArgs.targets)
+        foreach (Unit unit in args.targets)
         {
             Debug.Log($"{Lib.Translate(name)}对{Lib.Translate(unit.name)}使用了{card.name}");
         }
         hand.Remove(card);
         OnUseOrRespondCard?.Invoke(this, card);
-        card.Use(unitEventArgs.targets);
+        card.Use(args);
         if (card.name == "sha")
             shaNum--;
         else if (card.name == "jiu")
             jiuNum--;
-        unitEventArgs.card = null;
-        unitEventArgs.cards.Remove(card);
+        args.card = null;
+        args.cards.Remove(card);
     }
     //打出
     public void Respond(Card card)
@@ -327,35 +345,53 @@ public class Unit : MonoBehaviour
         hand.Remove(card);
         OnUseOrRespondCard?.Invoke(this, card);
         card.Respond();
-        unitEventArgs.card = null;
-        unitEventArgs.cards.Remove(card);
+        args.card = null;
+        args.cards.Remove(card);
     }
     //成为目标
-    public void BeTargeted(Card card)
+    public void BeTargeted(Args args, Card card)
     {
         Debug.Log($"{Lib.Translate(name)}成为{Lib.Translate(card.name)}的目标");
         switch (card)
         {
             case Sha sha:
-                StartCoroutine(ChooseToRespond((card) => card.name == "shan", () => Damage(1)));
+                StartCoroutine(ChooseToRespond((card) => card.name == "shan", () => args.player.DamageSource(this, 1 + args.player.Drunk)));
                 break;
             default:
                 break;
         }
+    }
+    //造成伤害
+    public void DamageSource(Unit target, int amount = 1)
+    {
+        target.Damage(amount);
     }
     //受到伤害
     public void Damage(int amount = 1)
     {
         Hp -= amount;
         Debug.Log($"{Lib.Translate(name)}受到{amount}点伤害，当前生命值为{Hp}");
-        OnBeDamaged?.Invoke(amount);
+        OnDamage?.Invoke(amount);
 
         if (Hp <= 0)
         {
             Die();
         }
 
-        OnDamageEnd?.Invoke(unitEventArgs);
+        OnDamageEnd?.Invoke(args);
+    }
+    public void Recover(int amount = 1)
+    {
+        if (hp == maxHp) { return; }
+        if (hp + amount <= MaxHp)
+        {
+            Hp += amount;
+        }
+        else
+        {
+            Hp = MaxHp;
+        }
+        OnRecover?.Invoke();
     }
     //死亡
     public void Die()
@@ -452,7 +488,7 @@ public class Unit : MonoBehaviour
     private void StopChoosingTarget(ref Coroutine coroutine)
     {
         StopCoroutine(coroutine);
-        UnitManager.UpdateUnitInteractable(unitEventArgs, (u) => false);
+        UnitManager.UpdateUnitInteractable(args, (u) => false);
         coroutine = null;
         //Debug.Log($"停止了选择目标协程{coroutine}");
     }
@@ -488,7 +524,7 @@ public class Unit : MonoBehaviour
                 case UnitState.Waiting:
                     break;
                 case UnitState.Confirmed:
-                    Respond(unitEventArgs.card);
+                    Respond(args.card);
                     goto default;
                 case UnitState.Canceled:
                     fail?.Invoke();
@@ -506,11 +542,12 @@ public class Unit : MonoBehaviour
     public IEnumerator ChooseCards(Func<Card, bool> filter, (int, int) range, Signal signal)
     {
         CheckCurrentUnit();
-        bool ready_pre = true;
+        bool ready_pre = false;
+        UpdateCardInteractable(filter);
         while (true)
         {
             yield return null;
-            bool ready = unitEventArgs.cards.Count.Between(range);
+            bool ready = args.cards.Count.Between(range);
             if (ready != ready_pre)
             {
                 signal.Ready = ready_pre = ready;
@@ -522,15 +559,16 @@ public class Unit : MonoBehaviour
     public IEnumerator ChooseTargets(Func<Unit, bool> filter, (int, int) range, Signal signal)
     {
         CheckCurrentUnit();
-        bool ready_pre = true;
+        bool ready_pre = false;
+        UnitManager.UpdateUnitInteractable(args, filter);
         while (true)
         {
             yield return null;
-            bool ready = unitEventArgs.targets.Count.Between(range);
+            bool ready = args.targets.Count.Between(range);
             if (ready != ready_pre)
             {
                 signal.Ready = ready_pre = ready;
-                UnitManager.UpdateUnitInteractable(unitEventArgs, filter, ready);
+                UnitManager.UpdateUnitInteractable(args, filter, ready);
             }
         }
     }
@@ -539,7 +577,7 @@ public class Unit : MonoBehaviour
     {
         TurnSystem.SetInTurnPlayer(this);
         //step 0:
-        shaNum = 10;
+        shaNum = 1;
         jiuNum = 1;
         //step 1:
         Phase = Phase.begin;
@@ -551,13 +589,13 @@ public class Unit : MonoBehaviour
         //step 3:
         Phase = Phase.use;
 
-        OnPhaseUseBegin?.Invoke(unitEventArgs);
+        OnPhaseUseBegin?.Invoke(args);
 
         Coroutine cardCoroutine = null;
         Coroutine targetCoroutine = null;
         Signal cardSignal = new((val) => CanCancel = val);
         Signal targetSignal = new((val) => CanConfirm = val);
-        unitEventArgs.Reset();
+        args.Reset();
 
         Card card = null;
         bool @using = true;
@@ -569,7 +607,7 @@ public class Unit : MonoBehaviour
             switch (cardSignal.Ready)
             {
                 case true when targetCoroutine == null:
-                    card = unitEventArgs.cards[0];
+                    card = args.cards[0];
                     targetCoroutine = StartCoroutine(ChooseTargets(card.targetFilter, card.targetNum, targetSignal));
                     break;
                 case false when targetCoroutine != null:
@@ -592,7 +630,7 @@ public class Unit : MonoBehaviour
                     goto default;
                 default:
                     State = UnitState.Waiting;
-                    unitEventArgs.Reset();
+                    args.Reset();
                     cardSignal.Ready = false;
                     if (targetCoroutine != null)
                     {

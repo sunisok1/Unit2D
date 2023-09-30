@@ -19,8 +19,22 @@ namespace UI
             unit = GetComponent<Unit>();
             audioSource = GetComponent<AudioSource>();
             unit.OnUseOrRespondCard += Unit_OnUseOrRespondCard;
-            unit.OnBeDamaged += Unit_OnBeDamaged;
+            unit.OnDamage += Unit_OnBeDamaged;
+            unit.OnRecover += Unit_OnRecover;
             unit.OnDead += Unit_OnDead;
+        }
+        private void PlayEffectAudioOneShot(string key)
+        {
+            if (!EffectAudioClipDic.TryGetValue(key, out AudioClip clip))
+            {
+                clip = EffectAudioClipDic[key] = Resources.Load<AudioClip>($"Audio/effect/{key}");
+            }
+            audioSource.PlayOneShot(clip);
+        }
+
+        private void Unit_OnRecover()
+        {
+            PlayEffectAudioOneShot("recover");
         }
 
         private void Unit_OnDead(object sender, System.EventArgs e)
@@ -32,25 +46,17 @@ namespace UI
 
         private void Unit_OnBeDamaged(int amount)
         {
-            AudioClip clip = null;
             switch (amount)
             {
                 case 1:
-                    if (!EffectAudioClipDic.TryGetValue("damage", out clip))
-                    {
-                        clip = EffectAudioClipDic["damage"] = Resources.Load<AudioClip>($"Audio/effect/damage");
-                    }
+                    PlayEffectAudioOneShot("damage");
                     break;
                 case > 1:
-                    if (!EffectAudioClipDic.TryGetValue("damage2", out clip))
-                    {
-                        clip = EffectAudioClipDic["damage2"] = Resources.Load<AudioClip>($"Audio/effect/damage2");
-                    }
+                    PlayEffectAudioOneShot("damage2");
                     break;
                 default:
                     break;
             }
-            audioSource.PlayOneShot(clip);
         }
 
         private void Unit_OnUseOrRespondCard(object unit, Card card)

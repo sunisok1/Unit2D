@@ -8,7 +8,7 @@ public abstract class Skill
     public SkillType type;
     public Unit owner;
     public string name;
-    public Action<UnitEventArgs> content = null;
+    public Action<Args> content = null;
     public Skill[] CompanionSkills;
     public bool silent = false;
 }
@@ -19,12 +19,12 @@ public class TriggerSkill : Skill
 {
     public (Triggerer, Timing) trigger;
     public float priority;
-    public Func<UnitEventArgs, Unit, bool> check;
+    public Func<Args, Unit, bool> check;
     public bool frequent = false;
     public bool forced = false;
     public bool nopop = false;
     public bool direct = false;
-    public Func<UnitEventArgs, Unit, bool> filter;
+    public Func<Args, Unit, bool> filter;
 
 }
 /// <summary>
@@ -54,7 +54,7 @@ public class ViewAsSkill : Skill
 
 }
 
-public class UnitEventArgs : EventArgs
+public class Args : EventArgs
 {
     public Unit player;
     public readonly List<Card> cards = new();

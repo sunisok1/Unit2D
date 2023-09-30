@@ -1,13 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using UnityEngine.Experimental.GlobalIllumination;
-using static UnityEngine.ParticleSystem;
 
 public static class UnitManager
 {
-    public static Unit First { get; private set; } = null;
-    public static Unit Last { get; private set; } = null;
+    public static Unit First = null;
+    public static Unit Last = null;
     public static List<Unit> UnitList { get; private set; } = new();
     public static List<Unit> FriendlyUnitList { get; private set; } = new();
     public static List<Unit> EnemyUnitList { get; private set; } = new();
@@ -36,21 +34,6 @@ public static class UnitManager
         GameObject gameObject = UnityEngine.Object.Instantiate(prefab, position, Quaternion.identity, GridSystem.UnitsParent);
         gameObject.name = name;
         Unit unit = gameObject.GetComponent<Unit>();
-        OnAnyUnitSpawned(unit);
-        unit.Chosen = false;
-        return unit;
-    }
-
-    public static void ReSetChosen()
-    {
-        foreach (Unit unit in UnitList)
-        {
-            unit.Chosen = false;
-        }
-    }
-
-    private static void OnAnyUnitSpawned(Unit unit)
-    {
         if (First == null)
         {
             First = unit;
@@ -65,19 +48,16 @@ public static class UnitManager
 
         UnitList.Add(unit);
         (unit.isEnemy ? EnemyUnitList : FriendlyUnitList).Add(unit);
+        unit.Chosen = false;
+        return unit;
     }
 
-    private static void OnAnyUnitDead(Unit unit)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public static void UpdateUnitInteractable(UnitEventArgs unitEventArgs, Func<Unit, bool> filter = null, bool ready = false)
+    public static void UpdateUnitInteractable(Args args, Func<Unit, bool> filter = null, bool ready = false)
     {
         filter ??= (unit) => false;
         if (ready)
         {
-            filter = (unit) => unitEventArgs.targets.Contains(unit);
+            filter = (unit) => args.targets.Contains(unit);
         }
         foreach (Unit unit in UnitList)
         {

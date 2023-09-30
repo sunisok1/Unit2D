@@ -61,6 +61,7 @@ public static class Lib
         dict["cisha"] = "刺杀";
         dict["shan"] = "闪";
         dict["tao"] = "桃";
+        dict["jiu"] = "酒";
         dict["bagua"] = "八卦阵";
         dict["bagua_bg"] = "卦";
         dict["bagua_skill"] = "八卦阵";
