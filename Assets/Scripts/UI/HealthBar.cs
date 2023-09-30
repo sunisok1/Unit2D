@@ -2,67 +2,70 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class HealthBar : MonoBehaviour
+namespace UI
 {
-    int hp;
-    int maxHp;
-    [SerializeField] GameObject hpPrefab;
-
-    List<GameObject> hpList = new();
-
-    [SerializeField] Sprite hpSprite1;
-    [SerializeField] Sprite hpSprite2;
-    [SerializeField] Sprite hpSprite3;
-    [SerializeField] Sprite hpSprite4;
-
-    private void Awake()
+    public class HealthBar : MonoBehaviour
     {
-        Unit unit = GetComponentInParent<Unit>();
-        unit.OnHpChange += SetHp;
-        unit.OnMaxHpChange += SetMaxHp;
-    }
-    public void SetHp(int hp)
-    {
-        Sprite sprite;
-        sprite = ((float)hp / maxHp) switch
+        int hp;
+        int maxHp;
+        [SerializeField] GameObject hpPrefab;
+
+        List<GameObject> hpList = new();
+
+        [SerializeField] Sprite hpSprite1;
+        [SerializeField] Sprite hpSprite2;
+        [SerializeField] Sprite hpSprite3;
+        [SerializeField] Sprite hpSprite4;
+
+        private void Awake()
         {
-            >= 0.75f => hpSprite1,
-            >= 0.50f => hpSprite2,
-            _ => hpSprite3,
-        };
-        switch ((float)hp / maxHp)
-        {
-            case >= 0.75f:
-                sprite = hpSprite1;
-                break;
-            case >= 0.50f:
-                sprite = hpSprite2;
-                break;
-            case >= 0.25f:
-                sprite = hpSprite3;
-                break;
-            default:
-                break;
+            Unit unit = GetComponentInParent<Unit>();
+            unit.OnHpChange += SetHp;
+            unit.OnMaxHpChange += SetMaxHp;
         }
-        int i = 0;
-        while (i < hp)
+        public void SetHp(int hp)
         {
-            hpList[i].GetComponent<Image>().sprite = sprite;
-            i++;
+            Sprite sprite;
+            sprite = ((float)hp / maxHp) switch
+            {
+                >= 0.75f => hpSprite1,
+                >= 0.50f => hpSprite2,
+                _ => hpSprite3,
+            };
+            switch ((float)hp / maxHp)
+            {
+                case >= 0.75f:
+                    sprite = hpSprite1;
+                    break;
+                case >= 0.50f:
+                    sprite = hpSprite2;
+                    break;
+                case >= 0.25f:
+                    sprite = hpSprite3;
+                    break;
+                default:
+                    break;
+            }
+            int i = 0;
+            while (i < hp)
+            {
+                hpList[i].GetComponent<Image>().sprite = sprite;
+                i++;
+            }
+            while (i < hpList.Count)
+            {
+                hpList[i].GetComponent<Image>().sprite = hpSprite4;
+                i++;
+            }
         }
-        while (i < hpList.Count)
+        public void SetMaxHp(int maxHp)
         {
-            hpList[i].GetComponent<Image>().sprite = hpSprite4;
-            i++;
-        }
-    }
-    public void SetMaxHp(int maxHp)
-    {
-        this.maxHp = maxHp;
-        for (int i = hpList.Count; i < maxHp; i++)
-        {
-            GameObject hp = Instantiate(hpPrefab, transform);
-            hpList.Add(hp);
+            this.maxHp = maxHp;
+            for (int i = hpList.Count; i < maxHp; i++)
+            {
+                GameObject hp = Instantiate(hpPrefab, transform);
+                hpList.Add(hp);
+            }
         }
     }
 }
