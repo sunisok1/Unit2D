@@ -113,6 +113,7 @@ public static class Deck
     {
         int random = Random.Range(0, cardList.Count);
         Card card = cardList[random];
+        card.Reset();
         cardList.Remove(card);
         return card;
     }

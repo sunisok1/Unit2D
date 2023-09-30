@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
 
 public abstract class Card
 {
@@ -33,15 +32,9 @@ public abstract class Card
         }
     }
 
-    public virtual void Use(IEnumerable<Unit> targets)
-    {
-        Reset();
-    }
+    public virtual void Use(IEnumerable<Unit> targets) { }
 
-    public virtual void Respond()
-    {
-        Reset();
-    }
+    public virtual void Respond() { }
 
     public Func<Unit, bool> targetFilter;
 
@@ -60,10 +53,7 @@ public abstract class Card
         Reset();
     }
 
-    protected virtual void Reset()
-    {
-        UnityEngine.Debug.Log("Reset");
-    }
+    public abstract void Reset();
 }
 
 public class Sha : Card
@@ -81,13 +71,12 @@ public class Sha : Card
 
     public override void Use(IEnumerable<Unit> targets)
     {
-        base.Use(targets);
         foreach (var unit in targets)
         {
             unit.BeTargeted(this);
         }
     }
-    protected override void Reset()
+    public override void Reset()
     {
         damage = 1;
         targetNum = (1, 1);
@@ -113,6 +102,10 @@ public class Shan : Card
     {
         name = "shan";
     }
+
+    public override void Reset()
+    {
+    }
 }
 
 public class Tao : Card
@@ -120,12 +113,15 @@ public class Tao : Card
     public Tao(int point, Suit suit) : base(point, suit)
     {
         name = "tao";
-        targetNum = (0, 0);
     }
     public override void Use(IEnumerable<Unit> targets)
     {
-        base.Use(targets);
         owner.Recover();
+    }
+
+    public override void Reset()
+    {
+        targetNum = (0, 0);
     }
 }
 
@@ -140,5 +136,10 @@ public class Jiu : Card
     {
         base.Use(targets);
         owner.Drunk += 1;
+    }
+
+    public override void Reset()
+    {
+        targetNum = (0, 0);
     }
 }
