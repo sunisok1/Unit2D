@@ -25,6 +25,7 @@ public class Unit : MonoBehaviour
 
     private Vector2Int gridPositon;
 
+    public UnitState State;
     /// 手牌
     public readonly ListWithEvent<Card> hand = new();
 
@@ -55,8 +56,14 @@ public class Unit : MonoBehaviour
     public event Action<bool> OnCanCancel;
     //使用时调用
     public event EventHandler<Card> OnUseOrRespondCard;
+    //血量改变时调用
+    public event Action<int> OnHpChange;
+    //血上限改变时调用
+    public event Action<int> OnMaxHpChange;
     //受伤时调用
     public event Action<int> OnBeDamaged;
+    //死亡时调用
+    public event Action OnDead;
     //添加技能时调用
     public event Action<Skill> OnAddSkill;
     //设置皮肤时调用
@@ -176,7 +183,25 @@ public class Unit : MonoBehaviour
         }
     }
 
-    public UnitState State;
+    public int MaxHp
+    {
+        get => maxHp;
+        set
+        {
+            maxHp = value;
+            OnMaxHpChange?.Invoke(value);
+        }
+    }
+    public int Hp
+    {
+        get => hp;
+        set
+        {
+            hp = value;
+            OnHpChange?.Invoke(value);
+        }
+    }
+
 
 
     #endregion
@@ -320,10 +345,22 @@ public class Unit : MonoBehaviour
     //受到伤害
     public void Damage(int amount = 1)
     {
-        Debug.Log($"{Lib.Translate(name)}受到{amount}点伤害，当前生命值为{hp}");
-        hp -= amount;
+        Hp -= amount;
+        Debug.Log($"{Lib.Translate(name)}受到{amount}点伤害，当前生命值为{Hp}");
         OnBeDamaged?.Invoke(amount);
+
+        if (Hp <= 0)
+        {
+            Die();
+        }
+
         OnDamageEnd?.Invoke(unitEventArgs);
+    }
+    //死亡
+    public void Die()
+    {
+        OnDead?.Invoke();
+        Destroy(gameObject, 5);
     }
     //设置武将
     public void SetCharactor(Character character)
@@ -331,7 +368,7 @@ public class Unit : MonoBehaviour
         this.character = character;
         name = character.name;
         sex = character.sex;
-        hp = maxHp = character.maxHp;
+        Hp = MaxHp = character.maxHp;
         foreach (Skill skill in character.skills)
         {
             AddSkill(skill);
@@ -397,6 +434,8 @@ public class Unit : MonoBehaviour
     {
         hand.AddRange(cards);
     }
+
+
     #endregion
 
     #region Operations
@@ -405,14 +444,14 @@ public class Unit : MonoBehaviour
         StopCoroutine(coroutine);
         UpdateCardInteractable((c) => false);
         coroutine = null;
-        Debug.Log($"停止了选择卡牌协程{coroutine}");
+        //Debug.Log($"停止了选择卡牌协程{coroutine}");
     }
     private void StopChoosingTarget(ref Coroutine coroutine)
     {
         StopCoroutine(coroutine);
         UnitManager.UpdateUnitInteractable(unitEventArgs, (u) => false);
         coroutine = null;
-        Debug.Log($"停止了选择目标协程{coroutine}");
+        //Debug.Log($"停止了选择目标协程{coroutine}");
     }
 
     private Unit CheckCurrentUnit(Unit unit = null)
@@ -497,7 +536,7 @@ public class Unit : MonoBehaviour
     {
         TurnSystem.SetInTurnPlayer(this);
         //step 0:
-        shaNum = 1;
+        shaNum = 10;
         jiuNum = 1;
         //step 1:
         Phase = Phase.begin;
