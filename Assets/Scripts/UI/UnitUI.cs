@@ -10,6 +10,8 @@ namespace UI
         Unit unit;
         [SerializeField] private Image chosenVisual;
         [SerializeField] private Image image;
+        [SerializeField] private GameObject glowObject;
+        [SerializeField] private Animator glowAnimator;
 
         private static Color disableColor = Color.gray;
         private static Color enableColor = new(0.3f, 0.7f, 0.8f);
@@ -34,15 +36,28 @@ namespace UI
             unit.Chosen = !unit.Chosen;
         }
 
-        private void Unit_OnInteractable(bool obj)
+        private void Unit_OnInteractable(bool val)
         {
-            chosenVisual.color = obj ? enableColor : disableColor;
+            chosenVisual.color = val ? enableColor : disableColor;
+            glowObject.SetActive(val);
+            if (val)
+            {
+                glowAnimator.SetTrigger("blue");
+            }
         }
 
         private void Unit_OnChosen(object sender, System.EventArgs e)
         {
             bool value = (sender as Unit).Chosen;
             chosenVisual.color = value ? chosenColor : enableColor;
+            if (value)
+            {
+                glowAnimator.SetTrigger("red");
+            }
+            else
+            {
+                glowAnimator.SetTrigger("blue");
+            }
         }
     }
 }

@@ -8,7 +8,7 @@ namespace UI
         [SerializeField] private float speed;
         [SerializeField] private CinemachineVirtualCamera cinemachine;
 
-        private float OrthographicSize = 5;
+        [SerializeField] private float OrthographicSize = 5;
 
         private Vector2 mousePos;
 

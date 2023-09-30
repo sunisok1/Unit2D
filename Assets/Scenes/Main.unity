@@ -250,6 +250,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 6
   cinemachine: {fileID: 1456021865}
+  OrthographicSize: 2
 --- !u!1001 &95254454
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1014,7 +1015,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 4.999999
+  orthographic size: 1.5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1118,7 +1119,7 @@ MonoBehaviour:
   m_Follow: {fileID: 32353781}
   m_Lens:
     FieldOfView: 60
-    OrthographicSize: 4.999999
+    OrthographicSize: 1.5
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0
