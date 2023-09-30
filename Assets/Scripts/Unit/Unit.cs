@@ -30,9 +30,10 @@ public class Unit : MonoBehaviour
     public readonly ListWithEvent<Card> hand = new();
 
     private Character character;
-
+    //上家
+    public Unit pre;
     //下家
-    [NonSerialized] public Unit next;
+    public Unit next;
 
     public Phase Phase { get; set; }
 
@@ -63,7 +64,7 @@ public class Unit : MonoBehaviour
     //受伤时调用
     public event Action<int> OnBeDamaged;
     //死亡时调用
-    public event Action OnDead;
+    public event EventHandler OnDead;
     //添加技能时调用
     public event Action<Skill> OnAddSkill;
     //设置皮肤时调用
@@ -359,7 +360,9 @@ public class Unit : MonoBehaviour
     //死亡
     public void Die()
     {
-        OnDead?.Invoke();
+        next.pre = pre;
+        pre.next = next;
+        OnDead?.Invoke(this, null);
         Destroy(gameObject, 5);
     }
     //设置武将

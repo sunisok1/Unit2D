@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using UnityEngine.Experimental.GlobalIllumination;
+using static UnityEngine.ParticleSystem;
 
 public static class UnitManager
 {
@@ -57,7 +58,9 @@ public static class UnitManager
         }
 
         Last.next = unit;
+        unit.pre = Last;
         unit.next = First;
+        First.pre = unit;
         Last = unit;
 
         UnitList.Add(unit);

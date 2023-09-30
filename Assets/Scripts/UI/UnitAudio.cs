@@ -20,6 +20,14 @@ namespace UI
             audioSource = GetComponent<AudioSource>();
             unit.OnUseOrRespondCard += Unit_OnUseOrRespondCard;
             unit.OnBeDamaged += Unit_OnBeDamaged;
+            unit.OnDead += Unit_OnDead;
+        }
+
+        private void Unit_OnDead(object sender, System.EventArgs e)
+        {
+            Unit unit = sender as Unit;
+            AudioClip clip = Resources.Load<AudioClip>($"Audio/die/{unit.name}");
+            audioSource.PlayOneShot(clip);
         }
 
         private void Unit_OnBeDamaged(int amount)
