@@ -325,13 +325,20 @@ public class Unit : MonoBehaviour
         }
         hand.Remove(card);
         OnUseOrRespondCard?.Invoke(this, card);
+        switch (card)
+        {
+            case Sha sha:
+                shaNum--;
+                sha.damage += Drunk;
+                break;
+            case Jiu jiu:
+                jiuNum--;
+                break;
+            default:
+                break;
+        }
         card.Use(args.targets);
-        if (card.name == "sha")
-            shaNum--;
-        else if (card.name == "jiu")
-            jiuNum--;
-        args.card = null;
-        args.cards.Remove(card);
+        args.Reset();
     }
     //打出
     public void Respond(Card card)
