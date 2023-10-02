@@ -62,7 +62,7 @@ public static class Standard
         };
 
         characters.Add(new("liubei", 1, Sex.male, Country.shu, 4, rende, jijiang));
-        characters.Add(new("guanyu", 2, Sex.male, Country.shu, 4, wusheng));
+        characters.Add(new("guanyu", 2, Sex.male, Country.shu, 1, wusheng));
         characters.Add(new("zhangfei", 3, Sex.male, Country.shu, 4));
         characters.Add(new("zhugeliang", 4, Sex.male, Country.shu, 3));
         characters.Add(new("zhaoyun", 5, Sex.male, Country.shu, 4));

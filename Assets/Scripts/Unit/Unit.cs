@@ -302,6 +302,7 @@ public class Unit : MonoBehaviour
         get => drunk;
         set
         {
+            if (drunk == value) return;
             drunk = value;
             OnDrunk?.Invoke(value);
         }
@@ -330,6 +331,7 @@ public class Unit : MonoBehaviour
             case Sha sha:
                 shaNum--;
                 sha.damage += Drunk;
+                Drunk = 0;
                 break;
             case Jiu jiu:
                 jiuNum--;
@@ -581,7 +583,6 @@ public class Unit : MonoBehaviour
         //step 0:
         shaNum = 1;
         jiuNum = 1;
-        drunk = 0;
         //step 1:
         Phase = Phase.begin;
 
